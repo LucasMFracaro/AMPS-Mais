@@ -230,7 +230,7 @@ def open_register():
             messagebox.showwarning("Atenção", "Todos os campos são obrigatórios!")
             return
 
-        senha_hash = hash_senha(senha).encode('utf-8')
+        senha_hash = hash_senha(senha)
 
         conn = connect_db()
         cursor = conn.cursor()
