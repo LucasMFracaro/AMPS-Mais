@@ -138,6 +138,15 @@ def open_register():
                               renda_perc REAL,
                               FOREIGN KEY(cpf_resp) REFERENCES contas_resp(cpf))''')
 
+            cursor.execute('''CREATE TABLE IF NOT EXISTS relatorios (
+                              por_fam INTEGER,
+                              homens INTEGER,
+                              mulheres INTEGER,
+                              menores INTEGER,
+                              idosos INTEGER,
+                              pcds INTEGER,
+                              populacao_total INTEGER)''')
+
             # Inserir os dados na tabela 'contas_resp'
             cursor.execute("INSERT INTO contas_resp (cpf, senha, nome, endereco, cep, bairro, cidade, uf) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
                            (cpf, senha_hash, nome, endereco, cep, bairro, cidade, uf))
