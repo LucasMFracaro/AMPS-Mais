@@ -145,14 +145,15 @@ def open_register():
             create_tables()
             # Inserir os dados na tabela 'contas_resp'
             cursor.execute("INSERT INTO contas_resp (cpf, senha, nome, endereco, cep, bairro, cidade, uf) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-                           (cpf, senha_hash, nome, endereco, cep, bairro, cidade, uf))
+                       (cpf, senha_hash, nome, endereco, cep, bairro, cidade, uf))
+
             conn.commit()
 
             # Inserir dados adicionais na tabela 'extra'
             cursor.execute("INSERT INTO extra (cpf_resp, num_moradores, renda_perc) VALUES (?, ?, ?)",
                            (cpf, num_moradores, renda_perc))
-            conn.commit()
 
+            conn.commit()
             messagebox.showinfo("Cadastro", "Cadastro realizado com sucesso!")
             atualizar_relatorios()
             register_window.destroy()
@@ -215,8 +216,6 @@ def open_register():
     entry_renda_perc.grid(row=12, column=1, padx=10, pady=10)
 
     tk.Button(register_window, text="Próximo", command=cadastrar, font=("Arial", 12), bg="#4CAF50", fg="white").grid(row=13, column=0, columnspan=2, pady=20)
-
-    # Função de cadastro
 
 
 def open_login():
