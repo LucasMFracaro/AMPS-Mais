@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import tkinter as tk
 from tkinter import messagebox
 import sqlite3
@@ -51,7 +50,7 @@ def create_tables():
     cursor.execute('''CREATE TABLE IF NOT EXISTS idoso
                     (tem_idoso SMALLINT NOT NULL DEFAULT 0,
                      cpf_resp VARCHAR(11), idade SMALLINT,
-                     aposentado BOOLEAN, bpc BOOLEAN,Casa
+                     aposentado BOOLEAN, bpc BOOLEAN,
                      CONSTRAINT fk_contas_resp FOREIGN KEY (cpf_resp) REFERENCES contas_resp(cpf) ON DELETE CASCADE)''')
 
     cursor.execute('''CREATE TABLE IF NOT EXISTS relatorios
@@ -313,6 +312,193 @@ root.geometry(f'{window_width}x{window_height}+{position_right}+{position_top}')
 tk.Button(root, text="Login", command=open_login, width=20, font=("Arial", 12), bg="#4CAF50", fg="white").pack(pady=20)
 tk.Button(root, text="Cadastrar-se", command=open_register, width=20, font=("Arial", 12), bg="#4CAF50", fg="white").pack(pady=20)
 tk.Button(root, text="Esqueci minha Senha", command=open_forgot_password, width=20, font=("Arial", 12), bg="#4CAF50", fg="white").pack(pady=20)
+def exibir_relatorio_completo():
+    conn = connect_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM contas_resp")
+    dados_resp = cursor.fetchall()
+    cursor.execute("SELECT * FROM contas_moradores")
+    dados_moradores = cursor.fetchall()
+
+    # Criando nova janela para o relatório completo
+    relatorio_window = tk.Toplevel(root)
+    relatorio_window.title("Relatório Completo")
+    relatorio_window.geometry("600x500")
+    relatorio_window.resizable(False, False)
+    
+    # Exibir dados completos na nova janela
+    relatorio = "Relatório Completo:\n\nMoradores:\n"
+    
+    for resp in dados_resp:
+        relatorio += f"Nome: {resp[2]}, CPF: {resp[0]}, Endereço: {resp[3]}\n"
+    
+    relatorio += "\nMoradores cadastrados:\n"
+    for morador in dados_moradores:
+        relatorio += f"Nome: {morador[1]}, CPF Responsável: {morador[0]}, Nascimento: {morador[2]}, Sexo: {morador[3]}\n"
+    
+    label_relatorio = tk.Label(relatorio_window, text=relatorio, font=("Arial", 12), justify="left")
+    label_relatorio.pack(padx=20, pady=20)
+    
+    conn.close()
+
+def exibir_dados_resumidos(cpf):
+    conn = connect_db()
+    cursor = conn.cursor()
+
+    # Buscar quantidade de pessoas por família
+    cursor.execute("SELECT num_moradores FROM extra_resp WHERE cpf_resp = ?", (cpf,))
+    num_moradores = cursor.fetchone()[0] if cursor.fetchone() else 0
+    
+    # Buscar quantidade de homens
+    cursor.execute("SELECT COUNT(*) FROM contas_moradores WHERE sexo = 'M' AND cpf_resp = ?", (cpf,))
+    homens = cursor.fetchone()[0]
+    
+    # Buscar quantidade de mulheres
+    cursor.execute("SELECT COUNT(*) FROM contas_moradores WHERE sexo = 'F' AND cpf_resp = ?", (cpf,))
+    mulheres = cursor.fetchone()[0]
+    
+    # Buscar quantidade de crianças até 12 anos
+    cursor.execute("SELECT COUNT(*) FROM menor WHERE cpf_resp = ? AND idade <= 12", (cpf,))
+    criancas = cursor.fetchone()[0]
+    
+    # Buscar quantidade de idosos
+    cursor.execute("SELECT COUNT(*) FROM idoso WHERE cpf_resp = ?", (cpf,))
+    idosos = cursor.fetchone()[0]
+    
+    # Buscar quantidade de pessoas com necessidades
+    cursor.execute("SELECT COUNT(*) FROM menor WHERE cpf_resp = ? AND condicao_especial IS NOT NULL", (cpf,))
+    pcds = cursor.fetchone()[0]
+    
+    # Calcular população total
+    populacao_total = num_moradores + homens + mulheres + criancas + idosos + pcds
+
+    # Criando nova janela para os dados resumidos
+    resumo_window = tk.Toplevel(root)
+    resumo_window.title("Resumo dos Dados")
+    resumo_window.geometry("600x400")
+    resumo_window.resizable(False, False)
+
+    # Exibir dados resumidos na nova janela
+    resumo = (
+        f"Quantidade de pessoas por família: {num_moradores}\n"
+        f"Quantidade de Homens: {homens}\n"
+        f"Quantidade de Mulheres: {mulheres}\n"
+  
+        f"População Total: {populacao_total}\n"
+    )
+    
+    label_resumo = tk.Label(resumo_window, text=resumo, font=("Arial", 12), justify="left")
+    label_resumo.pack(padx=20, pady=20)
+    
+    conn.close()
+
+# Função para mostrar os relatórios
+def exibir_relatorio():
+    conn = connect_db()
+    cursor = conn.cursor()
+    
+    # Selecionar os dados do relatório
+    cursor.execute("SELECT * FROM relatorios")
+    relatorio = cursor.fetchone()
+    
+    if relatorio:
+        # Criar nova janela para exibir o relatório
+        relatorio_window = tk.Toplevel(root)
+        relatorio_window.title("Relatórios")
+        relatorio_window.geometry("600x500")
+        relatorio_window.resizable(False, False)
+        
+        # Exibir os dados
+        relatorio_text = (
+            f"Relatórios:\n\n"
+            f"Quantidade de pessoas por família: {relatorio[0]:.2f}\n"
+            f"Quantidade de Homens: {relatorio[1]}\n"
+            f"Quantidade de Mulheres: {relatorio[2]}\n"
+
+            f"População Total: {relatorio[6]}\n"
+        )
+        
+        label_relatorio = tk.Label(relatorio_window, text=relatorio_text, font=("Arial", 12), justify="left")
+        label_relatorio.pack(padx=20, pady=20)
+    else:
+        messagebox.showwarning("Aviso", "Relatório não encontrado. Tente atualizar os dados.")
+    
+    conn.close()
+
+# Modificação na função principal para adicionar o botão "Relatório"
+def open_login():
+    login_window = tk.Toplevel(root)
+    login_window.title("Login")
+
+    # Define o tamanho da janela
+    login_window.geometry("400x400")
+    login_window.resizable(False, False)
+    login_window.config(bg="#ADD8E6")
+
+    # Centraliza a janela
+    screen_width = login_window.winfo_screenwidth()
+    screen_height = login_window.winfo_screenheight()
+    window_width = 400
+    window_height = 400
+    position_top = int(screen_height / 2 - window_height / 2)
+    position_right = int(screen_width / 2 - window_width / 2)
+    login_window.geometry(f'{window_width}x{window_height}+{position_right}+{position_top}')
+
+    tk.Label(login_window, text="Login", font=("Arial", 16, "bold"), bg="#ADD8E6").pack(pady=20)
+
+    tk.Label(login_window, text="CPF:", bg="#ADD8E6", font=("Arial", 12)).pack(pady=10)
+    entry_cpf = tk.Entry(login_window, font=("Arial", 12))
+    entry_cpf.pack(pady=10)
+
+    tk.Label(login_window, text="Senha:", bg="#ADD8E6", font=("Arial", 12)).pack(pady=10)
+    entry_senha = tk.Entry(login_window, show="*", font=("Arial", 12))
+    entry_senha.pack(pady=10)
+
+    # Função de login
+    def login():
+        cpf = entry_cpf.get()
+        senha = entry_senha.get()
+
+        conn = connect_db()
+        cursor = conn.cursor()
+        cursor.execute("SELECT senha FROM contas_resp WHERE cpf = ?", (cpf,))
+        result = cursor.fetchone()
+
+        if result:
+            senha_hash = result[0]
+            if check_senha(senha, senha_hash):
+                messagebox.showinfo("Login", "Login realizado com sucesso!")
+            else:
+                messagebox.showerror("Erro", "Senha incorreta!")
+        else:
+            messagebox.showerror("Erro", "CPF não encontrado!")
+
+        conn.close()
+
+    tk.Button(login_window, text="Entrar", command=login, font=("Arial", 12), bg="#4CAF50", fg="white").pack(pady=20)
+
+# Tela principal (Hub)
+root = tk.Tk()
+root.title("Hub de Cadastro")
+root.geometry("400x500")
+root.resizable(False, False)
+root.config(bg="#ADD8E6")
+
+# Centraliza a janela principal
+screen_width = root.winfo_screenwidth()
+screen_height = root.winfo_screenheight()
+window_width = 400
+window_height = 500
+position_top = int(screen_height / 2 - window_height / 2)
+position_right = int(screen_width / 2 - window_width / 2)
+root.geometry(f'{window_width}x{window_height}+{position_right}+{position_top}')
+
+# Botões do Hub
+tk.Button(root, text="Login", command=open_login, width=20, font=("Arial", 12), bg="#4CAF50", fg="white").pack(pady=20)
+tk.Button(root, text="Cadastrar-se", command=open_register, width=20, font=("Arial", 12), bg="#4CAF50", fg="white").pack(pady=20)
+tk.Button(root, text="Esqueci minha Senha", command=open_forgot_password, width=20, font=("Arial", 12), bg="#4CAF50", fg="white").pack(pady=20)
+tk.Button(root, text="Relatório", command=exibir_relatorio, width=20, font=("Arial", 12), bg="#4CAF50", fg="white").pack(pady=20)
 
 # Inicia a interface grfica
 root.mainloop()
+
