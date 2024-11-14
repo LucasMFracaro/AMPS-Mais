@@ -51,7 +51,7 @@ def create_tables():
     cursor.execute('''CREATE TABLE IF NOT EXISTS idoso
                     (tem_idoso SMALLINT NOT NULL DEFAULT 0,
                      cpf_resp VARCHAR(11), idade SMALLINT,
-                     aposentado BOOLEAN, bpc BOOLEAN,
+                     aposentado BOOLEAN, bpc BOOLEAN,Casa
                      CONSTRAINT fk_contas_resp FOREIGN KEY (cpf_resp) REFERENCES contas_resp(cpf) ON DELETE CASCADE)''')
 
     cursor.execute('''CREATE TABLE IF NOT EXISTS relatorios
@@ -75,7 +75,7 @@ def check_senha(senha_digitada, senha_hash):
 def atualizar_relatorios():
     conn = connect_db()
     cursor = conn.cursor()
-    cursor.execute("SELECT AVG(num_moradores) FROM extra")
+    cursor.execute("SELECT AVG(num_moradores) FROM extra_resp")
     por_fam = cursor.fetchone()[0] or 0
     cursor.execute("SELECT COUNT(*) FROM contas_resp WHERE sexo = 'M'")
     homens = cursor.fetchone()[0]
