@@ -10,12 +10,58 @@ def connect_db():
 def create_tables():
     conn = connect_db()
     cursor = conn.cursor()
-    cursor.execute('''CREATE TABLE IF NOT EXISTS contas_resp (cpf VARCHAR(11) PRIMARY KEY, senha VARCHAR NOT NULL, nome VARCHAR(50) NOT NULL, endereco VARCHAR(50) NOT NULL, cep VARCHAR(8) NOT NULL, bairro VARCHAR(20) NOT NULL, cidade VARCHAR(40) NOT NULL, uf CHAR(2) NOT NULL, nascimento DATE NOT NULL, sexo CHAR(1) NOT NULL, etnia VARCHAR(15) NOT NULL)''')
-    cursor.execute('''CREATE TABLE IF NOT EXISTS contas_moradores (cpf_resp VARCHAR(11), nome VARCHAR(50) NOT NULL, nascimento DATE NOT NULL, sexo CHAR(1) NOT NULL, etnia VARCHAR(15) NOT NULL, CONSTRAINT fk_contas_resp FOREIGN KEY (cpf_resp) REFERENCES contas_resp(cpf) ON DELETE CASCADE)''')
-    cursor.execute('''CREATE TABLE IF NOT EXISTS extra (cpf_resp VARCHAR(11), num_moradores INT NOT NULL, renda_perc DECIMAL(10, 2) NOT NULL, especie_dom CHAR(1) NOT NULL, tipo_dom CHAR(1) NOT NULL, parentesco_resp SMALLINT NOT NULL DEFAULT 1, CONSTRAINT fk_contas_resp FOREIGN KEY(cpf_resp) REFERENCES contas_resp(cpf) ON DELETE CASCADE)''')
-    cursor.execute('''CREATE TABLE IF NOT EXISTS menor (tem_menor SMALLINT NOT NULL DEFAULT 0, cpf_resp VARCHAR(11), idade SMALLINT, creche BOOLEAN, pre_escola BOOLEAN, fundamental BOOLEAN, ensino_medio BOOLEAN, condicao_especial VARCHAR(255), CONSTRAINT fk_contas_resp FOREIGN KEY (cpf_resp) REFERENCES contas_resp(cpf) ON DELETE CASCADE)''')
-    cursor.execute('''CREATE TABLE IF NOT EXISTS idoso (tem_idoso SMALLINT NOT NULL DEFAULT 0, cpf_resp VARCHAR(11), idade SMALLINT, aposentado BOOLEAN, bpc BOOLEAN, CONSTRAINT fk_contas_resp FOREIGN KEY (cpf_resp) REFERENCES contas_resp(cpf) ON DELETE CASCADE)''')
-    cursor.execute('''CREATE TABLE IF NOT EXISTS relatorios (por_fam FLOAT, homens INTEGER, mulheres INTEGER, menores INTEGER, idosos INTEGER, pcds INTEGER, populacao_total INTEGER)''')
+    cursor.execute('''CREATE TABLE IF NOT EXISTS contas_resp 
+                    (cpf VARCHAR(11) PRIMARY KEY,
+                     senha VARCHAR NOT NULL,
+                     nome VARCHAR(50) NOT NULL, 
+                     endereco VARCHAR(50) NOT NULL, 
+                     cep VARCHAR(8) NOT NULL, 
+                     bairro VARCHAR(20) NOT NULL, 
+                     cidade VARCHAR(40) NOT NULL, 
+                     uf CHAR(2) NOT NULL, 
+                     nascimento DATE NOT NULL, 
+                     sexo CHAR(1) NOT NULL, 
+                     etnia VARCHAR(15) NOT NULL)''')
+
+    cursor.execute('''CREATE TABLE IF NOT EXISTS contas_moradores 
+                    (cpf_resp VARCHAR(11),
+                     nome VARCHAR(50) NOT NULL,
+                     nascimento DATE NOT NULL,
+                     sexo CHAR(1) NOT NULL,
+                     etnia VARCHAR(15) NOT NULL,
+                     CONSTRAINT fk_contas_resp FOREIGN KEY (cpf_resp) REFERENCES contas_resp(cpf) ON DELETE CASCADE)''')
+
+    cursor.execute('''CREATE TABLE IF NOT EXISTS extra_resp 
+                    (cpf_resp VARCHAR(11),
+                     num_moradores INT NOT NULL,
+                     renda_perc DECIMAL(10, 2) NOT NULL,
+                     especie_dom CHAR(1) NOT NULL,
+                     tipo_dom CHAR(1) NOT NULL,
+                     parentesco_resp SMALLINT NOT NULL DEFAULT 1, 
+                     CONSTRAINT fk_contas_resp FOREIGN KEY(cpf_resp) REFERENCES contas_resp(cpf) ON DELETE CASCADE)''')
+
+    cursor.execute('''CREATE TABLE IF NOT EXISTS menor 
+                    (tem_menor SMALLINT NOT NULL DEFAULT 0,
+                     cpf_resp VARCHAR(11), idade SMALLINT,
+                     creche BOOLEAN, pre_escola BOOLEAN,
+                     fundamental BOOLEAN, ensino_medio BOOLEAN,
+                     condicao_especial VARCHAR(255),
+                     CONSTRAINT fk_contas_resp FOREIGN KEY (cpf_resp) REFERENCES contas_resp(cpf) ON DELETE CASCADE)''')
+
+    cursor.execute('''CREATE TABLE IF NOT EXISTS idoso
+                    (tem_idoso SMALLINT NOT NULL DEFAULT 0,
+                     cpf_resp VARCHAR(11), idade SMALLINT,
+                     aposentado BOOLEAN, bpc BOOLEAN,
+                     CONSTRAINT fk_contas_resp FOREIGN KEY (cpf_resp) REFERENCES contas_resp(cpf) ON DELETE CASCADE)''')
+
+    cursor.execute('''CREATE TABLE IF NOT EXISTS relatorios
+                    (por_fam FLOAT, homens INTEGER,
+                     mulheres INTEGER,
+                     menores INTEGER,
+                     idosos INTEGER,
+                     pcds INTEGER,
+                     populacao_total INTEGER)''')
+                     
     conn.commit()
     conn.close()
 
@@ -61,7 +107,7 @@ def open_register():
     register_window.geometry("500x700")
     register_window.resizable(False, False)
     register_window.attributes("-fullscreen", False)
-    register_window.attributes("-toolwindow", True)
+    #register_window.attributes("-toolwindow", True)
     
     screen_width = register_window.winfo_screenwidth()
     screen_height = register_window.winfo_screenheight()
@@ -72,52 +118,7 @@ def open_register():
     register_window.geometry(f'500x700+{position_right}+{position_top}')
     
     register_window.config(bg="#ADD8E6")
-    
-    tk.Label(register_window, text="Cadastro de Morador", font=("Arial", 16, "bold"), bg="#ADD8E6").grid(row=0,column=0,columnspan=2,pady=20)
-    
-    tk.Label(register_window,text="CPF:",bg="#ADD8E6",font=("Arial",12)).grid(row=1,column=0,padx=10,pady=10,sticky="e")
-    
-    entry_cpf = tk.Entry(register_window,font=("Arial",12))
-    
-    entry_cpf.grid(row=1,column=1,padx=10,pady=10)
 
-    tk.Label(register_window, text="Nome:", bg="#ADD8E6", font=("Arial", 12)).grid(row=2, column=0, padx=10, pady=10, sticky="e")
-    entry_nome = tk.Entry(register_window, font=("Arial", 12))
-    entry_nome.grid(row=2, column=1, padx=10, pady=10)
-
-    tk.Label(register_window, text="Senha:", bg="#ADD8E6", font=("Arial", 12)).grid(row=3, column=0, padx=10, pady=10, sticky="e")
-    entry_senha = tk.Entry(register_window, show="*", font=("Arial", 12))
-    entry_senha.grid(row=3, column=1, padx=10, pady=10)
-
-    tk.Label(register_window, text="Endereço:", bg="#ADD8E6", font=("Arial", 12)).grid(row=4, column=0, padx=10, pady=10, sticky="e")
-    entry_endereco = tk.Entry(register_window, font=("Arial", 12))
-    entry_endereco.grid(row=4, column=1, padx=10, pady=10)
-
-    tk.Label(register_window, text="CEP:", bg="#ADD8E6", font=("Arial", 12)).grid(row=5, column=0, padx=10, pady=10, sticky="e")
-    entry_cep = tk.Entry(register_window, font=("Arial", 12))
-    entry_cep.grid(row=5, column=1, padx=10, pady=10)
-
-    tk.Label(register_window, text="Bairro:", bg="#ADD8E6", font=("Arial", 12)).grid(row=6, column=0, padx=10, pady=10, sticky="e")
-    entry_bairro = tk.Entry(register_window, font=("Arial", 12))
-    entry_bairro.grid(row=6, column=1, padx=10, pady=10)
-
-    tk.Label(register_window, text="Cidade:", bg="#ADD8E6", font=("Arial", 12)).grid(row=7, column=0, padx=10, pady=10, sticky="e")
-    entry_cidade = tk.Entry(register_window, font=("Arial", 12))
-    entry_cidade.grid(row=7, column=1, padx=10, pady=10)
-
-    tk.Label(register_window, text="UF:", bg="#ADD8E6", font=("Arial", 12)).grid(row=8, column=0, padx=10, pady=10, sticky="e")
-    entry_uf = tk.Entry(register_window, font=("Arial", 12))
-    entry_uf.grid(row=8, column=1, padx=10, pady=10)
-
-    tk.Label(register_window, text="Número de Moradores:", bg="#ADD8E6", font=("Arial", 12)).grid(row=9, column=0, padx=10, pady=10, sticky="e")
-    entry_num_moradores = tk.Entry(register_window, font=("Arial", 12))
-    entry_num_moradores.grid(row=9, column=1, padx=10, pady=10)
-
-    tk.Label(register_window, text="Renda per Capita:", bg="#ADD8E6", font=("Arial", 12)).grid(row=10, column=0, padx=10, pady=10, sticky="e")
-    entry_renda_perc = tk.Entry(register_window, font=("Arial", 12))
-    entry_renda_perc.grid(row=10, column=1, padx=10, pady=10)
-
-    # Função de cadastro
     def cadastrar():
         cpf = entry_cpf.get()
         nome = entry_nome.get()
@@ -160,8 +161,62 @@ def open_register():
             print(e)
         finally:
             conn.close()
+    
+    tk.Label(register_window, text="Cadastro de Morador", font=("Arial", 16, "bold"), bg="#ADD8E6").grid(row=0,column=0,columnspan=2,pady=20)
+    
+    tk.Label(register_window,text="CPF:",bg="#ADD8E6",font=("Arial",12)).grid(row=1,column=0,padx=10,pady=10,sticky="e")
+    
+    entry_cpf = tk.Entry(register_window,font=("Arial",12))
+    
+    entry_cpf.grid(row=1,column=1,padx=10,pady=10)
 
-    tk.Button(register_window, text="Cadastrar", command=cadastrar, font=("Arial", 12), bg="#4CAF50", fg="white").grid(row=11, column=0, columnspan=2, pady=20)
+    tk.Label(register_window, text="Nome:", bg="#ADD8E6", font=("Arial", 12)).grid(row=2, column=0, padx=10, pady=10, sticky="e")
+    entry_nome = tk.Entry(register_window, font=("Arial", 12))
+    entry_nome.grid(row=2, column=1, padx=10, pady=10)
+
+    tk.Label(register_window, text="Etnia:", bg="#ADD8E6", font=("Arial", 12)).grid(row=3, column=0, padx=10, pady=10, sticky="e")
+    entry_etnia = tk.Entry(register_window, font=("Arial", 12))
+    entry_etnia.grid(row=3, column=1, padx=10, pady=10)
+  
+    tk.Label(register_window, text="Sexo (M/F):", bg="#ADD8E6", font=("Arial", 12)).grid(row=4, column=0, padx=10, pady=10, sticky="e")
+    entry_sexo = tk.Entry(register_window, font=("Arial", 12))
+    entry_sexo.grid(row=4, column=1, padx=10, pady=10)
+
+    tk.Label(register_window, text="Senha:", bg="#ADD8E6", font=("Arial", 12)).grid(row=5, column=0, padx=10, pady=10, sticky="e")
+    entry_senha = tk.Entry(register_window, show="*", font=("Arial", 12))
+    entry_senha.grid(row=5, column=1, padx=10, pady=10)
+
+    tk.Label(register_window, text="Endereço:", bg="#ADD8E6", font=("Arial", 12)).grid(row=6, column=0, padx=10, pady=10, sticky="e")
+    entry_endereco = tk.Entry(register_window, font=("Arial", 12))
+    entry_endereco.grid(row=6, column=1, padx=10, pady=10)
+
+    tk.Label(register_window, text="CEP:", bg="#ADD8E6", font=("Arial", 12)).grid(row=7, column=0, padx=10, pady=10, sticky="e")
+    entry_cep = tk.Entry(register_window, font=("Arial", 12))
+    entry_cep.grid(row=7, column=1, padx=10, pady=10)
+
+    tk.Label(register_window, text="Bairro:", bg="#ADD8E6", font=("Arial", 12)).grid(row=8, column=0, padx=10, pady=10, sticky="e")
+    entry_bairro = tk.Entry(register_window, font=("Arial", 12))
+    entry_bairro.grid(row=8, column=1, padx=10, pady=10)
+
+    tk.Label(register_window, text="Cidade:", bg="#ADD8E6", font=("Arial", 12)).grid(row=9, column=0, padx=10, pady=10, sticky="e")
+    entry_cidade = tk.Entry(register_window, font=("Arial", 12))
+    entry_cidade.grid(row=9, column=1, padx=10, pady=10)
+
+    tk.Label(register_window, text="UF:", bg="#ADD8E6", font=("Arial", 12)).grid(row=10, column=0, padx=10, pady=10, sticky="e")
+    entry_uf = tk.Entry(register_window, font=("Arial", 12))
+    entry_uf.grid(row=10, column=1, padx=10, pady=10)
+
+    tk.Label(register_window, text="Número de Moradores:", bg="#ADD8E6", font=("Arial", 12)).grid(row=11, column=0, padx=10, pady=10, sticky="e")
+    entry_num_moradores = tk.Entry(register_window, font=("Arial", 12))
+    entry_num_moradores.grid(row=11, column=1, padx=10, pady=10)
+
+    tk.Label(register_window, text="Renda per Capita:", bg="#ADD8E6", font=("Arial", 12)).grid(row=12, column=0, padx=10, pady=10, sticky="e")
+    entry_renda_perc = tk.Entry(register_window, font=("Arial", 12))
+    entry_renda_perc.grid(row=12, column=1, padx=10, pady=10)
+
+    tk.Button(register_window, text="Próximo", command=cadastrar, font=("Arial", 12), bg="#4CAF50", fg="white").grid(row=13, column=0, columnspan=2, pady=20)
+
+    # Função de cadastro
 
 
 def open_login():
