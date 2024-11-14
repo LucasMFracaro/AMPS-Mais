@@ -61,9 +61,10 @@ def create_tables():
                      idosos INTEGER,
                      pcds INTEGER,
                      populacao_total INTEGER)''')
-                     
+
     conn.commit()
     conn.close()
+
 
 def hash_senha(senha):
     return hashlib.sha256(senha.encode()).hexdigest()
@@ -104,18 +105,16 @@ create_tables()
 def open_register():
     register_window = tk.Toplevel(root)
     register_window.title("Cadastrar-se")
-    register_window.geometry("500x700")
+    register_window.geometry("600x800")  # Aumentei o tamanho da janela para acomodar mais campos
     register_window.resizable(False, False)
-    register_window.attributes("-fullscreen", False)
-    #register_window.attributes("-toolwindow", True)
     
     screen_width = register_window.winfo_screenwidth()
     screen_height = register_window.winfo_screenheight()
     
-    position_top = int(screen_height / 2 - 700 / 2)
-    position_right = int(screen_width / 2 - 500 / 2)
+    position_top = int(screen_height / 2 - 800 / 2)
+    position_right = int(screen_width / 2 - 600 / 2)
     
-    register_window.geometry(f'500x700+{position_right}+{position_top}')
+    register_window.geometry(f'800x700+{position_right}+{position_top}')
     
     register_window.config(bg="#ADD8E6")
 
@@ -128,8 +127,13 @@ def open_register():
         bairro = entry_bairro.get()
         cidade = entry_cidade.get()
         uf = entry_uf.get()
+        nascimento = entry_nascimento.get()  # Adicionando campo de nascimento
+        sexo = entry_sexo.get()  # Sexo M/F
+        etnia = entry_etnia.get()  # Etnia
         num_moradores = entry_num_moradores.get()
         renda_perc = entry_renda_perc.get()
+        especie_dom = entry_especie.get()  # Usando Entry para espécie de domicílio
+        tipo_dom = entry_tipo.get()  # Usando Entry para tipo de domicílio
 
         if not cpf or not nome or not senha or not endereco:
             messagebox.showwarning("Atenção", "Todos os campos são obrigatórios!")
@@ -143,17 +147,19 @@ def open_register():
         try:
             # Criar as tabelas se não existirem
             create_tables()
+            
             # Inserir os dados na tabela 'contas_resp'
-            cursor.execute("INSERT INTO contas_resp (cpf, senha, nome, endereco, cep, bairro, cidade, uf) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-                       (cpf, senha_hash, nome, endereco, cep, bairro, cidade, uf))
+            cursor.execute("INSERT INTO contas_resp (cpf, senha, nome, endereco, cep, bairro, cidade, uf, nascimento, sexo, etnia) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                        (cpf, senha_hash, nome, endereco, cep, bairro, cidade, uf, nascimento, sexo, etnia))
 
             conn.commit()
 
-            # Inserir dados adicionais na tabela 'extra'
-            cursor.execute("INSERT INTO extra (cpf_resp, num_moradores, renda_perc) VALUES (?, ?, ?)",
-                           (cpf, num_moradores, renda_perc))
+            # Inserir dados adicionais na tabela 'extra_resp'
+            cursor.execute("INSERT INTO extra_resp (cpf_resp, num_moradores, renda_perc, especie_dom, tipo_dom) VALUES (?, ?, ?, ?, ?)",
+                        (cpf, num_moradores, renda_perc, especie_dom, tipo_dom))
 
             conn.commit()
+
             messagebox.showinfo("Cadastro", "Cadastro realizado com sucesso!")
             atualizar_relatorios()
             register_window.destroy()
@@ -162,13 +168,13 @@ def open_register():
             print(e)
         finally:
             conn.close()
+
     
     tk.Label(register_window, text="Cadastro de Morador", font=("Arial", 16, "bold"), bg="#ADD8E6").grid(row=0,column=0,columnspan=2,pady=20)
-    
-    tk.Label(register_window,text="CPF:",bg="#ADD8E6",font=("Arial",12)).grid(row=1,column=0,padx=10,pady=10,sticky="e")
-    
-    entry_cpf = tk.Entry(register_window,font=("Arial",12))
-    
+
+    # Coluna 1 (campo à esquerda)
+    tk.Label(register_window, text="CPF:", bg="#ADD8E6", font=("Arial", 12)).grid(row=1,column=0,padx=10,pady=10,sticky="e")
+    entry_cpf = tk.Entry(register_window, font=("Arial", 12))
     entry_cpf.grid(row=1,column=1,padx=10,pady=10)
 
     tk.Label(register_window, text="Nome:", bg="#ADD8E6", font=("Arial", 12)).grid(row=2, column=0, padx=10, pady=10, sticky="e")
@@ -178,6 +184,10 @@ def open_register():
     tk.Label(register_window, text="Etnia:", bg="#ADD8E6", font=("Arial", 12)).grid(row=3, column=0, padx=10, pady=10, sticky="e")
     entry_etnia = tk.Entry(register_window, font=("Arial", 12))
     entry_etnia.grid(row=3, column=1, padx=10, pady=10)
+
+    tk.Label(register_window, text="Nascimento:", bg="#ADD8E6", font=("Arial", 12)).grid(row=11, column=0, padx=10, pady=10, sticky="e")
+    entry_nascimento = tk.Entry(register_window, font=("Arial", 12))
+    entry_nascimento.grid(row=11, column=1, padx=10, pady=10)
   
     tk.Label(register_window, text="Sexo (M/F):", bg="#ADD8E6", font=("Arial", 12)).grid(row=4, column=0, padx=10, pady=10, sticky="e")
     entry_sexo = tk.Entry(register_window, font=("Arial", 12))
@@ -207,16 +217,26 @@ def open_register():
     entry_uf = tk.Entry(register_window, font=("Arial", 12))
     entry_uf.grid(row=10, column=1, padx=10, pady=10)
 
-    tk.Label(register_window, text="Número de Moradores:", bg="#ADD8E6", font=("Arial", 12)).grid(row=11, column=0, padx=10, pady=10, sticky="e")
+    # Coluna 2 (campo à direita) - Adicionando novos campos
+    tk.Label(register_window, text="Número de Moradores:", bg="#ADD8E6", font=("Arial", 12)).grid(row=1, column=2, padx=10, pady=10, sticky="e")
     entry_num_moradores = tk.Entry(register_window, font=("Arial", 12))
-    entry_num_moradores.grid(row=11, column=1, padx=10, pady=10)
+    entry_num_moradores.grid(row=1, column=3, padx=10, pady=10)
 
-    tk.Label(register_window, text="Renda per Capita:", bg="#ADD8E6", font=("Arial", 12)).grid(row=12, column=0, padx=10, pady=10, sticky="e")
+    tk.Label(register_window, text="Renda per Capita:", bg="#ADD8E6", font=("Arial", 12)).grid(row=2, column=2, padx=10, pady=10, sticky="e")
     entry_renda_perc = tk.Entry(register_window, font=("Arial", 12))
-    entry_renda_perc.grid(row=12, column=1, padx=10, pady=10)
+    entry_renda_perc.grid(row=2, column=3, padx=10, pady=10)
 
-    tk.Button(register_window, text="Próximo", command=cadastrar, font=("Arial", 12), bg="#4CAF50", fg="white").grid(row=13, column=0, columnspan=2, pady=20)
+    # Espécie de Domicílio (na segunda coluna) - Usando Entry
+    tk.Label(register_window, text="Espécie de Domicílio:", bg="#ADD8E6", font=("Arial", 12)).grid(row=3, column=2, padx=10, pady=10, sticky="e")
+    entry_especie = tk.Entry(register_window, font=("Arial", 12))
+    entry_especie.grid(row=3, column=3, padx=10, pady=10)
 
+    # Tipo de Domicílio (na segunda coluna) - Usando Entry
+    tk.Label(register_window, text="Tipo de Domicílio:", bg="#ADD8E6", font=("Arial", 12)).grid(row=4, column=2, padx=10, pady=10, sticky="e")
+    entry_tipo = tk.Entry(register_window, font=("Arial", 12))
+    entry_tipo.grid(row=4, column=3, padx=10, pady=10)
+
+    tk.Button(register_window, text="Cadastrar", command=cadastrar, font=("Arial", 12), bg="#4CAF50", fg="white").grid(row=5, column=0, columnspan=4, pady=20)
 
 def open_login():
     login_window = tk.Toplevel(root)
