@@ -292,26 +292,6 @@ def open_login():
 def open_forgot_password():
     messagebox.showinfo("Esqueci minha Senha", "Por favor, entre em contato com o email: andaime540@gmail.com")
 
-# Tela principal (Hub)
-root = tk.Tk()
-root.title("Hub de Cadastro")
-root.geometry("400x400")
-root.resizable(False, False)
-root.config(bg="#ADD8E6")
-
-# Centraliza a janela principal
-screen_width = root.winfo_screenwidth()
-screen_height = root.winfo_screenheight()
-window_width = 400
-window_height = 400
-position_top = int(screen_height / 2 - window_height / 2)
-position_right = int(screen_width / 2 - window_width / 2)
-root.geometry(f'{window_width}x{window_height}+{position_right}+{position_top}')
-
-# Botes do Hub
-tk.Button(root, text="Login", command=open_login, width=20, font=("Arial", 12), bg="#4CAF50", fg="white").pack(pady=20)
-tk.Button(root, text="Cadastrar-se", command=open_register, width=20, font=("Arial", 12), bg="#4CAF50", fg="white").pack(pady=20)
-tk.Button(root, text="Esqueci minha Senha", command=open_forgot_password, width=20, font=("Arial", 12), bg="#4CAF50", fg="white").pack(pady=20)
 def exibir_relatorio_completo():
     conn = connect_db()
     cursor = conn.cursor()
@@ -501,4 +481,3 @@ tk.Button(root, text="Relatório", command=exibir_relatorio, width=20, font=("Ar
 
 # Inicia a interface grfica
 root.mainloop()
-
