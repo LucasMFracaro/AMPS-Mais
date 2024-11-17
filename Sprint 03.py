@@ -124,21 +124,21 @@ def formatar_entrada(event, tipo="cpf"):
 
 create_tables()
 
-def open_register():
-    register_window = tk.Toplevel(root)
-    register_window.title("Cadastro")
-    register_window.geometry("600x800")  # Aumentei o tamanho da janela para acomodar mais campos
-    register_window.resizable(False, False)
+def open_cadastrar():
+    cadastrar_window = tk.Toplevel(root)
+    cadastrar_window.title("Cadastro")
+    cadastrar_window.geometry("600x800")  # Aumentei o tamanho da janela para acomodar mais campos
+    cadastrar_window.resizable(False, False)
     
-    screen_width = register_window.winfo_screenwidth()
-    screen_height = register_window.winfo_screenheight()
+    screen_width = cadastrar_window.winfo_screenwidth()
+    screen_height = cadastrar_window.winfo_screenheight()
     
     position_top = int(screen_height / 2 - 800 / 2)
     position_right = int(screen_width / 2 - 600 / 2)
     
-    register_window.geometry(f'800x700+{position_right}+{position_top}')
+    cadastrar_window.geometry(f'800x700+{position_right}+{position_top}')
     
-    register_window.config(bg="#ADD8E6")
+    cadastrar_window.config(bg="#ADD8E6")
 
     def cadastrar():
         cpf = entry_cpf.get()
@@ -181,7 +181,7 @@ def open_register():
 
             messagebox.showinfo("Cadastro", "Cadastro realizado com sucesso!")
             atualizar_relatorios()
-            register_window.destroy()
+            cadastrar_window.destroy()
         except sqlite3.Error as e:
             messagebox.showerror("Erro", "Erro ao cadastrar. Tente novamente.")
             print(e)
@@ -189,137 +189,190 @@ def open_register():
             conn.close()
 
     
-    tk.Label(register_window, text="Cadastro de Morador", font=("Arial", 16, "bold"), bg="#ADD8E6").grid(row=0,column=0,columnspan=2,pady=20)
+    tk.Label(cadastrar_window, text="Cadastro de Morador", font=("Arial", 16, "bold"), bg="#ADD8E6").grid(row=0,column=0,columnspan=2,pady=20)
 
     # Coluna 1 (campo à esquerda)
-    tk.Label(register_window, text="CPF:", bg="#ADD8E6", font=("Arial", 12)).grid(row=1,column=0,padx=10,pady=10,sticky="e")
-    entry_cpf = EntryComFoco(register_window, font=("Arial", 12))
+    tk.Label(cadastrar_window, text="CPF:", bg="#ADD8E6", font=("Arial", 12)).grid(row=1,column=0,padx=10,pady=10,sticky="e")
+    entry_cpf = EntryComFoco(cadastrar_window, font=("Arial", 12))
     entry_cpf.grid(row=1,column=1,padx=10,pady=10)
     entry_cpf.bind("<KeyRelease>", lambda event: formatar_entrada(event, tipo="cpf"))
 
-    tk.Label(register_window, text="Senha:", bg="#ADD8E6", font=("Arial", 12)).grid(row=2, column=0, padx=10, pady=10, sticky="e")
-    entry_senha = EntryComFoco(register_window, show="*", font=("Arial", 12))
+    tk.Label(cadastrar_window, text="Senha:", bg="#ADD8E6", font=("Arial", 12)).grid(row=2, column=0, padx=10, pady=10, sticky="e")
+    entry_senha = EntryComFoco(cadastrar_window, show="*", font=("Arial", 12))
     entry_senha.grid(row=2, column=1, padx=10, pady=10)
 
-    tk.Label(register_window, text="Nome:", bg="#ADD8E6", font=("Arial", 12)).grid(row=3, column=0, padx=10, pady=10, sticky="e")
-    entry_nome = EntryComFoco(register_window, font=("Arial", 12))
+    tk.Label(cadastrar_window, text="Nome:", bg="#ADD8E6", font=("Arial", 12)).grid(row=3, column=0, padx=10, pady=10, sticky="e")
+    entry_nome = EntryComFoco(cadastrar_window, font=("Arial", 12))
     entry_nome.grid(row=3, column=1, padx=10, pady=10)
 
-    tk.Label(register_window, text="Sexo (M/F):", bg="#ADD8E6", font=("Arial", 12)).grid(row=4, column=0, padx=10, pady=10, sticky="e")
-    entry_sexo = EntryComFoco(register_window, font=("Arial", 12))
+    tk.Label(cadastrar_window, text="Sexo (M/F):", bg="#ADD8E6", font=("Arial", 12)).grid(row=4, column=0, padx=10, pady=10, sticky="e")
+    entry_sexo = EntryComFoco(cadastrar_window, font=("Arial", 12))
     entry_sexo.grid(row=4, column=1, padx=10, pady=10)
     entry_sexo.bind("<KeyRelease>", lambda event: formatar_entrada(event, tipo="sexo"))
 
-    tk.Label(register_window, text="Etnia:", bg="#ADD8E6", font=("Arial", 12)).grid(row=5, column=0, padx=10, pady=10, sticky="e")
-    entry_etnia = EntryComFoco(register_window, font=("Arial", 12))
+    tk.Label(cadastrar_window, text="Etnia:", bg="#ADD8E6", font=("Arial", 12)).grid(row=5, column=0, padx=10, pady=10, sticky="e")
+    entry_etnia = EntryComFoco(cadastrar_window, font=("Arial", 12))
     entry_etnia.grid(row=5, column=1, padx=10, pady=10)
 
-    tk.Label(register_window, text="Nascimento:", bg="#ADD8E6", font=("Arial", 12)).grid(row=6, column=0, padx=10, pady=10, sticky="e")
-    entry_nascimento = EntryComFoco(register_window, font=("Arial", 12))
+    tk.Label(cadastrar_window, text="Nascimento:", bg="#ADD8E6", font=("Arial", 12)).grid(row=6, column=0, padx=10, pady=10, sticky="e")
+    entry_nascimento = EntryComFoco(cadastrar_window, font=("Arial", 12))
     entry_nascimento.grid(row=6, column=1, padx=10, pady=10)
     entry_nascimento.bind("<KeyRelease>", lambda event: formatar_entrada(event, tipo="data"))  # Formatar data ao digitar
 
-    tk.Label(register_window, text="Endereço:", bg="#ADD8E6", font=("Arial", 12)).grid(row=7, column=0, padx=10, pady=10, sticky="e")
-    entry_endereco = EntryComFoco(register_window, font=("Arial", 12))
+    tk.Label(cadastrar_window, text="Endereço:", bg="#ADD8E6", font=("Arial", 12)).grid(row=7, column=0, padx=10, pady=10, sticky="e")
+    entry_endereco = EntryComFoco(cadastrar_window, font=("Arial", 12))
     entry_endereco.grid(row=7, column=1, padx=10, pady=10)
 
-    tk.Label(register_window, text="CEP:", bg="#ADD8E6", font=("Arial", 12)).grid(row=8, column=0, padx=10, pady=10, sticky="e")
-    entry_cep = EntryComFoco(register_window, font=("Arial", 12))
+    tk.Label(cadastrar_window, text="CEP:", bg="#ADD8E6", font=("Arial", 12)).grid(row=8, column=0, padx=10, pady=10, sticky="e")
+    entry_cep = EntryComFoco(cadastrar_window, font=("Arial", 12))
     entry_cep.grid(row=8, column=1, padx=10, pady=10)
     entry_cep.bind("<KeyRelease>", lambda event: formatar_entrada(event, tipo="cep"))
 
-    tk.Label(register_window, text="Bairro:", bg="#ADD8E6", font=("Arial", 12)).grid(row=9, column=0, padx=10, pady=10, sticky="e")
-    entry_bairro = EntryComFoco(register_window, font=("Arial", 12))
+    tk.Label(cadastrar_window, text="Bairro:", bg="#ADD8E6", font=("Arial", 12)).grid(row=9, column=0, padx=10, pady=10, sticky="e")
+    entry_bairro = EntryComFoco(cadastrar_window, font=("Arial", 12))
     entry_bairro.grid(row=9, column=1, padx=10, pady=10)
 
-    tk.Label(register_window, text="Cidade:", bg="#ADD8E6", font=("Arial", 12)).grid(row=10, column=0, padx=10, pady=10, sticky="e")
-    entry_cidade = EntryComFoco(register_window, font=("Arial", 12))
+    tk.Label(cadastrar_window, text="Cidade:", bg="#ADD8E6", font=("Arial", 12)).grid(row=10, column=0, padx=10, pady=10, sticky="e")
+    entry_cidade = EntryComFoco(cadastrar_window, font=("Arial", 12))
     entry_cidade.grid(row=10, column=1, padx=10, pady=10)
 
-    tk.Label(register_window, text="UF:", bg="#ADD8E6", font=("Arial", 12)).grid(row=11, column=0, padx=10, pady=10, sticky="e")
-    entry_uf = EntryComFoco(register_window, font=("Arial", 12))
+    tk.Label(cadastrar_window, text="UF:", bg="#ADD8E6", font=("Arial", 12)).grid(row=11, column=0, padx=10, pady=10, sticky="e")
+    entry_uf = EntryComFoco(cadastrar_window, font=("Arial", 12))
     entry_uf.grid(row=11, column=1, padx=10, pady=10)
     entry_uf.bind("<KeyRelease>", lambda event: formatar_entrada(event, tipo="uf"))
 
-    tk.Label(register_window, text="Número de Moradores:", bg="#ADD8E6", font=("Arial", 12)).grid(row=1, column=2, padx=10, pady=10, sticky="e")
-    entry_num_moradores = EntryComFoco(register_window, font=("Arial", 12))
+    tk.Label(cadastrar_window, text="Número de Moradores:", bg="#ADD8E6", font=("Arial", 12)).grid(row=1, column=2, padx=10, pady=10, sticky="e")
+    entry_num_moradores = EntryComFoco(cadastrar_window, font=("Arial", 12))
     entry_num_moradores.grid(row=1, column=3, padx=10, pady=10)
     entry_num_moradores.bind("<KeyRelease>", lambda event: formatar_entrada(event, tipo="num"))
 
-    tk.Label(register_window, text="Renda per Capita:", bg="#ADD8E6", font=("Arial", 12)).grid(row=2, column=2, padx=10, pady=10, sticky="e")
-    entry_renda_perc = EntryComFoco(register_window, font=("Arial", 12))
+    tk.Label(cadastrar_window, text="Renda per Capita:", bg="#ADD8E6", font=("Arial", 12)).grid(row=2, column=2, padx=10, pady=10, sticky="e")
+    entry_renda_perc = EntryComFoco(cadastrar_window, font=("Arial", 12))
     entry_renda_perc.grid(row=2, column=3, padx=10, pady=10)
     entry_renda_perc.bind("<KeyRelease>", lambda event: formatar_entrada(event, tipo="num"))
 
-    tk.Label(register_window, text="Espécie de Domicílio:", bg="#ADD8E6", font=("Arial", 12)).grid(row=3, column=2, padx=10, pady=10, sticky="e")
-    entry_especie = EntryComFoco(register_window, font=("Arial", 12))
+    tk.Label(cadastrar_window, text="Espécie de Domicílio:", bg="#ADD8E6", font=("Arial", 12)).grid(row=3, column=2, padx=10, pady=10, sticky="e")
+    entry_especie = EntryComFoco(cadastrar_window, font=("Arial", 12))
     entry_especie.grid(row=3, column=3, padx=10, pady=10)
 
-    tk.Label(register_window, text="Tipo de Domicílio:", bg="#ADD8E6", font=("Arial", 12)).grid(row=4, column=2, padx=10, pady=10, sticky="e")
-    entry_tipo = EntryComFoco(register_window, font=("Arial", 12))
+    tk.Label(cadastrar_window, text="Tipo de Domicílio:", bg="#ADD8E6", font=("Arial", 12)).grid(row=4, column=2, padx=10, pady=10, sticky="e")
+    entry_tipo = EntryComFoco(cadastrar_window, font=("Arial", 12))
     entry_tipo.grid(row=4, column=3, padx=10, pady=10)
 
-    tk.Button(register_window, text="Cadastrar", command=cadastrar, font=("Arial", 12), bg="#4CAF50", fg="white").grid(row=5, column=0, columnspan=4, pady=10)
+    tk.Button(cadastrar_window, text="Cadastrar", command=cadastrar, font=("Arial", 12), bg="#4CAF50", fg="white").grid(row=5, column=0, columnspan=4, pady=10)
 
-def open_login():
-    login_window = tk.Toplevel(root)
-    login_window.title("Login")
+def open_cadastrar_idoso():
+    cadastrar_window = tk.Toplevel(root)
+    cadastrar_window.title("Cadastro de Idosos")
 
     # Define o tamanho da janela
-    login_window.geometry("400x400")
-    login_window.resizable(False, False)
-    login_window.config(bg="#ADD8E6")
+    cadastrar_window.geometry("400x400")
+    cadastrar_window.resizable(False, False)
+    cadastrar_window.config(bg="#ADD8E6")
 
     # Centraliza a janela
-    screen_width = login_window.winfo_screenwidth()
-    screen_height = login_window.winfo_screenheight()
+    screen_width = cadastrar_window.winfo_screenwidth()
+    screen_height = cadastrar_window.winfo_screenheight()
     window_width = 400
     window_height = 400
     position_top = int(screen_height / 2 - window_height / 2)
     position_right = int(screen_width / 2 - window_width / 2)
-    login_window.geometry(f'{window_width}x{window_height}+{position_right}+{position_top}')
+    cadastrar_window.geometry(f'{window_width}x{window_height}+{position_right}+{position_top}')
 
-    tk.Label(login_window, text="Login", font=("Arial", 16, "bold"), bg="#ADD8E6").pack(pady=20)
+    tk.Label(cadastrar_window, text="Cadastro de Idosos", font=("Arial", 16, "bold"), bg="#ADD8E6").pack(pady=20)
 
-    tk.Label(login_window, text="CPF:", bg="#ADD8E6", font=("Arial", 12)).pack(pady=10)
-    entry_cpf = EntryComFoco(login_window, font=("Arial", 12))
-    entry_cpf.pack(pady=10)
+def open_cadastrar_menor():
+    cadastrar_window = tk.Toplevel(root)
+    cadastrar_window.title("Cadastro de Menores")
 
-    entry_cpf.bind("<KeyRelease>", lambda event: formatar_entrada(event, tipo="cpf"))
+    cadastrar_window.geometry("400x400")
+    cadastrar_window.resizable(False, False)
+    cadastrar_window.config(bg="#ADD8E6")
 
-    tk.Label(login_window, text="Senha:", bg="#ADD8E6", font=("Arial", 12)).pack(pady=10)
-    
-    bt_entrar = tk.Button(login_window, text="Entrar", command=login, font=("Arial", 12), bg="#4CAF50", fg="white")
-    bt_entrar.pack(pady=20)
+    screen_width = cadastrar_window.winfo_screenwidth()
+    screen_height = cadastrar_window.winfo_screenheight()
+    window_width = 400
+    window_height = 400
+    position_top = int(screen_height / 2 - window_height / 2)
+    position_right = int(screen_width / 2 - window_width / 2)
+    cadastrar_window.geometry(f'{window_width}x{window_height}+{position_right}+{position_top}')
 
-    entry_senha = EntryComFoco(login_window, show="*", font=("Arial", 12), botao=bt_entrar)
-    entry_senha.pack(pady=10)
+    tk.Label(cadastrar_window, text="Cadastro de Menores", font=("Arial", 16, "bold"), bg="#ADD8E6").pack(pady=20)
 
-    tk.Button(login_window, text="Esqueci minha Senha", command=open_forgot_password, width=15, font=("Arial", 10), bg="#4CAF50", fg="white").pack(pady=10)
+def open_cadastrar_morador():
+    cadastrar_mor_window = tk.Toplevel(root)
+    cadastrar_mor_window.title("Cadastro de Moradores")
 
-    def login():
-        cpf = entry_cpf.get()
-        senha = entry_senha.get()
+    cadastrar_mor_window.geometry("400x400")
+    cadastrar_mor_window.resizable(False, False)
+    cadastrar_mor_window.config(bg="#ADD8E6")
 
-        cpf = cpf.replace(".", "").replace("-", "")
+    screen_width = cadastrar_mor_window.winfo_screenwidth()
+    screen_height = cadastrar_mor_window.winfo_screenheight()
+    window_width = 400
+    window_height = 400
+    position_top = int(screen_height / 2 - window_height / 2)
+    position_right = int(screen_width / 2 - window_width / 2)
+    cadastrar_mor_window.geometry(f'{window_width}x{window_height}+{position_right}+{position_top}')
+
+    tk.Label(cadastrar_mor_window, text="Cadastro de Morador", font=("Arial", 16, "bold"), bg="#ADD8E6").grid(row=0, column=0, columnspan=2, pady=20)
+
+    def cadastrar():
+        cpf_resp = entry_cpf.get()
+        nome = entry_nome.get()
+        nascimento = entry_nascimento.get()
+        sexo = entry_sexo.get()
+        etnia = entry_etnia.get()
 
         conn = connect_db()
         cursor = conn.cursor()
-        cursor.execute("SELECT senha FROM contas_resp WHERE cpf = ?", (cpf,))
-        result = cursor.fetchone()
 
-        if result:
-            senha_hash = result[0]
-            if check_senha(senha, senha_hash):
-                messagebox.showinfo("Login", "Login realizado com sucesso!")
-                tk.Button(root, text="Relatório", command=exibir_relatorio, width=20, font=("Arial", 12), bg="#4CAF50", fg="white").pack(pady=20)
+        try:
+            cursor.execute("SELECT 1 FROM contas_resp WHERE cpf = ?", (cpf_resp,))
+            result = cursor.fetchone()
 
-                btlogin.pack_forget()
-                login_window.destroy()
-            else:
-                messagebox.showerror("Erro", "Senha incorreta!")
-        else:
-            messagebox.showerror("Erro", "CPF não encontrado!")
+            if not result:
+                messagebox.showwarning("CPF não encontrado", "O CPF do responsável não foi encontrado. Verifique e tente novamente.")
+                return
+            cursor.execute("INSERT INTO contas_moraredores (cpf_resp, nome, nascimento, sexo, etnia) VALUES (?, ?, ?, ?, ?)",
+                           (cpf_resp, nome, nascimento, sexo, etnia))
+            conn.commit()
+
+            messagebox.showinfo("Cadastro", "Cadastro realizado com sucesso!")
+            atualizar_relatorios()
+            cadastrar_mor_window.destroy()
+
+        except sqlite3.Error as e:
+            messagebox.showerror("Erro", "Erro ao cadastrar. Tente novamente.")
+            print(e)
+        finally:
+            conn.close()
+
+    tk.Label(cadastrar_mor_window, text="CPF do Responsável:", bg="#ADD8E6", font=("Arial", 12)).grid(row=1, column=0, padx=10, pady=10, sticky="e")
+    entry_cpf = EntryComFoco(cadastrar_mor_window, font=("Arial", 12))
+    entry_cpf.grid(row=1, column=1, padx=10, pady=10)
+    entry_cpf.bind("<KeyRelease>", lambda event: formatar_entrada(event, tipo="cpf"))
+
+    tk.Label(cadastrar_mor_window, text="Nome:", bg="#ADD8E6", font=("Arial", 12)).grid(row=2, column=0, padx=10, pady=10, sticky="e")
+    entry_nome = EntryComFoco(cadastrar_mor_window, font=("Arial", 12))
+    entry_nome.grid(row=2, column=1, padx=10, pady=10)
+
+    tk.Label(cadastrar_mor_window, text="Sexo (M/F):", bg="#ADD8E6", font=("Arial", 12)).grid(row=3, column=0, padx=10, pady=10, sticky="e")
+    entry_sexo = EntryComFoco(cadastrar_mor_window, font=("Arial", 12))
+    entry_sexo.grid(row=3, column=1, padx=10, pady=10)
+    entry_sexo.bind("<KeyRelease>", lambda event: formatar_entrada(event, tipo="sexo"))
+
+    tk.Label(cadastrar_mor_window, text="Etnia:", bg="#ADD8E6", font=("Arial", 12)).grid(row=4, column=0, padx=10, pady=10, sticky="e")
+    entry_etnia = EntryComFoco(cadastrar_mor_window, font=("Arial", 12))
+    entry_etnia.grid(row=4, column=1, padx=10, pady=10)
+
+    tk.Label(cadastrar_mor_window, text="Nascimento:", bg="#ADD8E6", font=("Arial", 12)).grid(row=5, column=0, padx=10, pady=10, sticky="e")
+    entry_nascimento = EntryComFoco(cadastrar_mor_window, font=("Arial", 12))
+    entry_nascimento.grid(row=5, column=1, padx=10, pady=10)
+    entry_nascimento.bind("<KeyRelease>", lambda event: formatar_entrada(event, tipo="data"))
+
+    # Botão de cadastro
+    tk.Button(cadastrar_mor_window, text="Cadastrar", command=cadastrar, font=("Arial", 12), bg="#4CAF50", fg="white").grid(row=6, column=0, columnspan=2, pady=10)
 
 
 def open_forgot_password(): messagebox.showinfo("Esqueci minha Senha", "Por favor, entre em contato com o email: andaime540@gmail.com ou lucasfracaro0403@gmail.com")
@@ -426,7 +479,6 @@ def exibir_relatorio():
     
     conn.close()
 
-# Modificação na função principal para adicionar o botão "Relatório"
 def open_login():
     login_window = tk.Toplevel(root)
     login_window.title("Login")
@@ -452,18 +504,19 @@ def open_login():
     entry_cpf.pack(pady=10)
     entry_cpf.bind("<KeyRelease>", lambda event: formatar_entrada(event, tipo="cpf"))
 
+    btentrar = tk.Button(login_window, text="Entrar", font=("Arial", 12), bg="#4CAF50", fg="white")
+
     tk.Label(login_window, text="Senha:", bg="#ADD8E6", font=("Arial", 12)).pack(pady=10)
-    entry_senha = EntryComFoco(login_window, show="*", font=("Arial", 12))
+    entry_senha = EntryComFoco(login_window, show="*", font=("Arial", 12), botao=btentrar)
     entry_senha.pack(pady=10)
 
-    tk.Button(login_window, text="Esqueci minha Senha", command=open_forgot_password, width=15, font=("Arial", 10), bg="#4CAF50", fg="white").pack(pady=10)
+    btentrar.pack(pady=20)
+    btentrar.pack_configure(after=entry_senha)
 
-    # Função de login
     def login():
         cpf = entry_cpf.get()
         senha = entry_senha.get()
 
-        # Verificar se o CPF está correto no banco de dados
         conn = connect_db()
         cursor = conn.cursor()
         cursor.execute("SELECT senha FROM contas_resp WHERE cpf = ?", (cpf,))
@@ -473,10 +526,16 @@ def open_login():
             senha_hash = result[0]
             if check_senha(senha, senha_hash):
                 messagebox.showinfo("Login", "Login realizado com sucesso!")
-                tk.Button(root, text="Relatório", command=exibir_relatorio, width=20, font=("Arial", 12), bg="#4CAF50", fg="white").pack(pady=20)
 
                 btlogin.pack_forget()
+                btcadastro.pack_forget()
                 login_window.destroy()
+
+                tk.Button(root, text="Cadastrar Morador", command=open_cadastrar_morador, width=20, font=("Arial", 12), bg="#4CAF50", fg="white").pack(pady=20)
+                tk.Button(root, text="Cadastrar Idoso", command=open_cadastrar_idoso, width=20, font=("Arial", 12), bg="#4CAF50", fg="white").pack(pady=20)
+                tk.Button(root, text="Cadastrar Menor de Idade", command=open_cadastrar_menor, width=20, font=("Arial", 12), bg="#4CAF50", fg="white").pack(pady=20)
+                tk.Button(root, text="Relatório", command=exibir_relatorio, width=20, font=("Arial", 12), bg="#4CAF50", fg="white").pack(pady=20)
+
             else:
                 messagebox.showerror("Erro", "Senha incorreta!")
         else:
@@ -484,7 +543,9 @@ def open_login():
 
         conn.close()
 
-    tk.Button(login_window, text="Entrar", command=login, font=("Arial", 12), bg="#4CAF50", fg="white").pack(pady=20)
+    btentrar.config(command=login)
+    tk.Button(login_window, text="Esqueci minha Senha", command=open_forgot_password, width=15, font=("Arial", 10), bg="#4CAF50", fg="white").pack(pady=10)
+
 
 
 # Tela principal (Hub)
@@ -506,6 +567,7 @@ root.geometry(f'{window_width}x{window_height}+{position_right}+{position_top}')
 # Botões do Hub
 btlogin = tk.Button(root, text="Login do Responsável", command=open_login, width=20, font=("Arial", 12), bg="#4CAF50", fg="white")
 btlogin.pack(pady=20)
-tk.Button(root, text="Cadastro", command=open_register, width=20, font=("Arial", 12), bg="#4CAF50", fg="white").pack(pady=20)
+btcadastro = tk.Button(root, text="Cadastro de Responsável", command=open_cadastrar, width=20, font=("Arial", 12), bg="#4CAF50", fg="white")
+btcadastro.pack(pady=20)
 
 root.mainloop()
