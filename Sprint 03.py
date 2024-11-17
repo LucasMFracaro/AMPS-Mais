@@ -71,6 +71,33 @@ def hash_senha(senha):
 def check_senha(senha_digitada, senha_hash):
     return hash_senha(senha_digitada) == senha_hash
 
+def formatar_entrada(event, tipo="cpf"):
+    texto = event.widget.get().replace(".", "").replace("-", "").replace("/", "")
+    texto_formatado = ""
+    
+    if tipo == "cpf":
+        if len(texto) <= 3:
+            texto_formatado = texto
+        elif len(texto) <= 6:
+            texto_formatado = texto[:3] + "." + texto[3:]
+        elif len(texto) <= 9:
+            texto_formatado = texto[:3] + "." + texto[3:6] + "." + texto[6:]
+        else:
+            texto_formatado = texto[:3] + "." + texto[3:6] + "." + texto[6:9] + "-" + texto[9:11]
+    
+    elif tipo == "data":
+        if len(texto) <= 2:
+            texto_formatado = texto
+        elif len(texto) <= 4:
+            texto_formatado = texto[:2] + "/" + texto[2:]
+        else:
+            texto_formatado = texto[:2] + "/" + texto[2:4] + "/" + texto[4:8]
+    
+    if event.widget.get() != texto_formatado:
+        event.widget.delete(0, tk.END)
+        event.widget.insert(0, texto_formatado)
+
+
 def atualizar_relatorios():
     conn = connect_db()
     cursor = conn.cursor()
@@ -103,7 +130,7 @@ create_tables()
 
 def open_register():
     register_window = tk.Toplevel(root)
-    register_window.title("Cadastrar-se")
+    register_window.title("Cadastro")
     register_window.geometry("600x800")  # Aumentei o tamanho da janela para acomodar mais campos
     register_window.resizable(False, False)
     
@@ -175,6 +202,7 @@ def open_register():
     tk.Label(register_window, text="CPF:", bg="#ADD8E6", font=("Arial", 12)).grid(row=1,column=0,padx=10,pady=10,sticky="e")
     entry_cpf = tk.Entry(register_window, font=("Arial", 12))
     entry_cpf.grid(row=1,column=1,padx=10,pady=10)
+    entry_cpf.bind("<KeyRelease>", lambda event: formatar_entrada(event, tipo="cpf"))
 
     tk.Label(register_window, text="Nome:", bg="#ADD8E6", font=("Arial", 12)).grid(row=2, column=0, padx=10, pady=10, sticky="e")
     entry_nome = tk.Entry(register_window, font=("Arial", 12))
@@ -187,6 +215,7 @@ def open_register():
     tk.Label(register_window, text="Nascimento:", bg="#ADD8E6", font=("Arial", 12)).grid(row=11, column=0, padx=10, pady=10, sticky="e")
     entry_nascimento = tk.Entry(register_window, font=("Arial", 12))
     entry_nascimento.grid(row=11, column=1, padx=10, pady=10)
+    entry_nascimento.bind("<KeyRelease>", lambda event: formatar_entrada(event, tipo="data"))  # Formatar data ao digitar
   
     tk.Label(register_window, text="Sexo (M/F):", bg="#ADD8E6", font=("Arial", 12)).grid(row=4, column=0, padx=10, pady=10, sticky="e")
     entry_sexo = tk.Entry(register_window, font=("Arial", 12))
@@ -261,15 +290,24 @@ def open_login():
     entry_cpf = tk.Entry(login_window, font=("Arial", 12))
     entry_cpf.pack(pady=10)
 
+    # Bind da formatação do CPF no evento de digitação
+    entry_cpf.bind("<KeyRelease>", lambda event: formatar_entrada(event, tipo="cpf"))
+
     tk.Label(login_window, text="Senha:", bg="#ADD8E6", font=("Arial", 12)).pack(pady=10)
     entry_senha = tk.Entry(login_window, show="*", font=("Arial", 12))
     entry_senha.pack(pady=10)
+
+    tk.Button(login_window, text="Esqueci minha Senha", command=open_forgot_password, width=15, font=("Arial", 10), bg="#4CAF50", fg="white").pack(pady=10)
 
     # Função de login
     def login():
         cpf = entry_cpf.get()
         senha = entry_senha.get()
 
+        # Formatar CPF antes de verificar no banco
+        cpf = cpf.replace(".", "").replace("-", "")  # Remover formatação para consulta no banco de dados
+
+        # Verificar se o CPF está correto no banco de dados
         conn = connect_db()
         cursor = conn.cursor()
         cursor.execute("SELECT senha FROM contas_resp WHERE cpf = ?", (cpf,))
@@ -279,6 +317,10 @@ def open_login():
             senha_hash = result[0]
             if check_senha(senha, senha_hash):
                 messagebox.showinfo("Login", "Login realizado com sucesso!")
+                tk.Button(root, text="Relatório", command=exibir_relatorio, width=20, font=("Arial", 12), bg="#4CAF50", fg="white").pack(pady=20)
+
+                btlogin.pack_forget()
+                login_window.destroy()
             else:
                 messagebox.showerror("Erro", "Senha incorreta!")
         else:
@@ -288,7 +330,7 @@ def open_login():
 
     tk.Button(login_window, text="Entrar", command=login, font=("Arial", 12), bg="#4CAF50", fg="white").pack(pady=20)
 
-# Funo de recuperao de senha
+
 def open_forgot_password():
     messagebox.showinfo("Esqueci minha Senha", "Por favor, entre em contato com o email: andaime540@gmail.com")
 
@@ -363,7 +405,6 @@ def exibir_dados_resumidos(cpf):
         f"Quantidade de pessoas por família: {num_moradores}\n"
         f"Quantidade de Homens: {homens}\n"
         f"Quantidade de Mulheres: {mulheres}\n"
-  
         f"População Total: {populacao_total}\n"
     )
     
@@ -426,19 +467,23 @@ def open_login():
 
     tk.Label(login_window, text="Login", font=("Arial", 16, "bold"), bg="#ADD8E6").pack(pady=20)
 
-    tk.Label(login_window, text="CPF:", bg="#ADD8E6", font=("Arial", 12)).pack(pady=10)
+    tk.Label(login_window, text="CPF:", bg="#ADD8E6", font=("Arial", 12)).pack(pady=20)
     entry_cpf = tk.Entry(login_window, font=("Arial", 12))
     entry_cpf.pack(pady=10)
+    entry_cpf.bind("<KeyRelease>", lambda event: formatar_entrada(event, tipo="cpf"))
 
     tk.Label(login_window, text="Senha:", bg="#ADD8E6", font=("Arial", 12)).pack(pady=10)
     entry_senha = tk.Entry(login_window, show="*", font=("Arial", 12))
     entry_senha.pack(pady=10)
+
+    tk.Button(login_window, text="Esqueci minha Senha", command=open_forgot_password, width=15, font=("Arial", 10), bg="#4CAF50", fg="white").pack(pady=10)
 
     # Função de login
     def login():
         cpf = entry_cpf.get()
         senha = entry_senha.get()
 
+        # Verificar se o CPF está correto no banco de dados
         conn = connect_db()
         cursor = conn.cursor()
         cursor.execute("SELECT senha FROM contas_resp WHERE cpf = ?", (cpf,))
@@ -448,6 +493,10 @@ def open_login():
             senha_hash = result[0]
             if check_senha(senha, senha_hash):
                 messagebox.showinfo("Login", "Login realizado com sucesso!")
+                tk.Button(root, text="Relatório", command=exibir_relatorio, width=20, font=("Arial", 12), bg="#4CAF50", fg="white").pack(pady=20)
+
+                btlogin.pack_forget()
+                login_window.destroy()
             else:
                 messagebox.showerror("Erro", "Senha incorreta!")
         else:
@@ -456,6 +505,7 @@ def open_login():
         conn.close()
 
     tk.Button(login_window, text="Entrar", command=login, font=("Arial", 12), bg="#4CAF50", fg="white").pack(pady=20)
+
 
 # Tela principal (Hub)
 root = tk.Tk()
@@ -474,10 +524,9 @@ position_right = int(screen_width / 2 - window_width / 2)
 root.geometry(f'{window_width}x{window_height}+{position_right}+{position_top}')
 
 # Botões do Hub
-tk.Button(root, text="Login", command=open_login, width=20, font=("Arial", 12), bg="#4CAF50", fg="white").pack(pady=20)
-tk.Button(root, text="Cadastrar-se", command=open_register, width=20, font=("Arial", 12), bg="#4CAF50", fg="white").pack(pady=20)
-tk.Button(root, text="Esqueci minha Senha", command=open_forgot_password, width=20, font=("Arial", 12), bg="#4CAF50", fg="white").pack(pady=20)
-tk.Button(root, text="Relatório", command=exibir_relatorio, width=20, font=("Arial", 12), bg="#4CAF50", fg="white").pack(pady=20)
+btlogin = tk.Button(root, text="Login", command=open_login, width=20, font=("Arial", 12), bg="#4CAF50", fg="white")
+btlogin.pack(pady=20)
+tk.Button(root, text="Cadastro", command=open_register, width=20, font=("Arial", 12), bg="#4CAF50", fg="white").pack(pady=20)
 
-# Inicia a interface grfica
+# Inicia a interface gráfica
 root.mainloop()
