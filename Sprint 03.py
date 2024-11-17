@@ -90,30 +90,37 @@ def check_senha(senha_digitada, senha_hash):
     return hash_senha(senha_digitada) == senha_hash
 
 def formatar_entrada(event, tipo="cpf"):
-    texto = event.widget.get().replace(".", "").replace("-", "").replace("/", "")
+    texto = event.widget.get()
+    texto = ''.join(c for c in texto if c.isdigit() or (tipo in ["sexo", "uf"] and c.isalpha()))
     texto_formatado = ""
-    
+
     if tipo == "cpf":
-        if len(texto) <= 3:
-            texto_formatado = texto
-        elif len(texto) <= 6:
-            texto_formatado = texto[:3] + "." + texto[3:]
-        elif len(texto) <= 9:
-            texto_formatado = texto[:3] + "." + texto[3:6] + "." + texto[6:]
-        else:
-            texto_formatado = texto[:3] + "." + texto[3:6] + "." + texto[6:9] + "-" + texto[9:11]
-    
+        texto_formatado = (
+            texto[:3] + ("." if len(texto) > 3 else "") +
+            texto[3:6] + ("." if len(texto) > 6 else "") +
+            texto[6:9] + ("-" if len(texto) > 9 else "") +
+            texto[9:11]
+        )
     elif tipo == "data":
-        if len(texto) <= 2:
-            texto_formatado = texto
-        elif len(texto) <= 4:
-            texto_formatado = texto[:2] + "/" + texto[2:]
-        else:
-            texto_formatado = texto[:2] + "/" + texto[2:4] + "/" + texto[4:8]
-    
+        texto_formatado = (
+            texto[:2] + ("/" if len(texto) > 2 else "") +
+            texto[2:4] + ("/" if len(texto) > 4 else "") +
+            texto[4:8]
+        )
+    elif tipo == "cep":
+        texto_formatado = texto[:5] + ("-" if len(texto) > 5 else "") + texto[5:8]
+    elif tipo == "sexo":
+        texto_formatado = texto[:1].upper() if texto[:1].upper() in ("M", "F") else ""
+    elif tipo == "uf":
+        texto_formatado = texto[:2].upper()
+    elif tipo == "num":
+        texto_formatado = ''.join(c for c in texto if c.isdigit())
+
     if event.widget.get() != texto_formatado:
         event.widget.delete(0, tk.END)
         event.widget.insert(0, texto_formatado)
+
+
 
 create_tables()
 
@@ -198,19 +205,20 @@ def open_register():
     entry_nome = EntryComFoco(register_window, font=("Arial", 12))
     entry_nome.grid(row=3, column=1, padx=10, pady=10)
 
-    tk.Label(register_window, text="Sexo (M/F):", bg="#ADD8E6", font=("Arial", 12)).grid(row=6, column=0, padx=10, pady=10, sticky="e")
+    tk.Label(register_window, text="Sexo (M/F):", bg="#ADD8E6", font=("Arial", 12)).grid(row=4, column=0, padx=10, pady=10, sticky="e")
     entry_sexo = EntryComFoco(register_window, font=("Arial", 12))
     entry_sexo.grid(row=4, column=1, padx=10, pady=10)
-    
-    tk.Label(register_window, text="Etnia:", bg="#ADD8E6", font=("Arial", 12)).grid(row=4, column=0, padx=10, pady=10, sticky="e")
+    entry_sexo.bind("<KeyRelease>", lambda event: formatar_entrada(event, tipo="sexo"))
+
+    tk.Label(register_window, text="Etnia:", bg="#ADD8E6", font=("Arial", 12)).grid(row=5, column=0, padx=10, pady=10, sticky="e")
     entry_etnia = EntryComFoco(register_window, font=("Arial", 12))
     entry_etnia.grid(row=5, column=1, padx=10, pady=10)
 
-    tk.Label(register_window, text="Nascimento:", bg="#ADD8E6", font=("Arial", 12)).grid(row=5, column=0, padx=10, pady=10, sticky="e")
+    tk.Label(register_window, text="Nascimento:", bg="#ADD8E6", font=("Arial", 12)).grid(row=6, column=0, padx=10, pady=10, sticky="e")
     entry_nascimento = EntryComFoco(register_window, font=("Arial", 12))
     entry_nascimento.grid(row=6, column=1, padx=10, pady=10)
     entry_nascimento.bind("<KeyRelease>", lambda event: formatar_entrada(event, tipo="data"))  # Formatar data ao digitar
-  
+
     tk.Label(register_window, text="Endereço:", bg="#ADD8E6", font=("Arial", 12)).grid(row=7, column=0, padx=10, pady=10, sticky="e")
     entry_endereco = EntryComFoco(register_window, font=("Arial", 12))
     entry_endereco.grid(row=7, column=1, padx=10, pady=10)
@@ -218,6 +226,7 @@ def open_register():
     tk.Label(register_window, text="CEP:", bg="#ADD8E6", font=("Arial", 12)).grid(row=8, column=0, padx=10, pady=10, sticky="e")
     entry_cep = EntryComFoco(register_window, font=("Arial", 12))
     entry_cep.grid(row=8, column=1, padx=10, pady=10)
+    entry_cep.bind("<KeyRelease>", lambda event: formatar_entrada(event, tipo="cep"))
 
     tk.Label(register_window, text="Bairro:", bg="#ADD8E6", font=("Arial", 12)).grid(row=9, column=0, padx=10, pady=10, sticky="e")
     entry_bairro = EntryComFoco(register_window, font=("Arial", 12))
@@ -230,14 +239,17 @@ def open_register():
     tk.Label(register_window, text="UF:", bg="#ADD8E6", font=("Arial", 12)).grid(row=11, column=0, padx=10, pady=10, sticky="e")
     entry_uf = EntryComFoco(register_window, font=("Arial", 12))
     entry_uf.grid(row=11, column=1, padx=10, pady=10)
+    entry_uf.bind("<KeyRelease>", lambda event: formatar_entrada(event, tipo="uf"))
 
     tk.Label(register_window, text="Número de Moradores:", bg="#ADD8E6", font=("Arial", 12)).grid(row=1, column=2, padx=10, pady=10, sticky="e")
     entry_num_moradores = EntryComFoco(register_window, font=("Arial", 12))
     entry_num_moradores.grid(row=1, column=3, padx=10, pady=10)
+    entry_num_moradores.bind("<KeyRelease>", lambda event: formatar_entrada(event, tipo="num"))
 
     tk.Label(register_window, text="Renda per Capita:", bg="#ADD8E6", font=("Arial", 12)).grid(row=2, column=2, padx=10, pady=10, sticky="e")
     entry_renda_perc = EntryComFoco(register_window, font=("Arial", 12))
     entry_renda_perc.grid(row=2, column=3, padx=10, pady=10)
+    entry_renda_perc.bind("<KeyRelease>", lambda event: formatar_entrada(event, tipo="num"))
 
     tk.Label(register_window, text="Espécie de Domicílio:", bg="#ADD8E6", font=("Arial", 12)).grid(row=3, column=2, padx=10, pady=10, sticky="e")
     entry_especie = EntryComFoco(register_window, font=("Arial", 12))
