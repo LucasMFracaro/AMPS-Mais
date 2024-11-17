@@ -3,8 +3,24 @@ from tkinter import messagebox
 import sqlite3
 import hashlib
 
-def connect_db():
-    return sqlite3.connect('moradores.db')
+class EntryComFoco(tk.Entry):
+    def __init__(self, master=None, botao=None, **kwargs):
+        super().__init__(master, **kwargs)
+        self.botao = botao
+        self.bind("<Return>", self.mudar_foco)
+
+    def mudar_foco(self, event):
+        entradas = [entry for entry in self.master.winfo_children() if isinstance(entry, tk.Entry)]
+        widget_atual = event.widget
+        if isinstance(widget_atual, tk.Entry):
+            indice_atual = entradas.index(widget_atual)
+            if indice_atual == len(entradas) - 1:
+                if self.botao:
+                    self.botao.invoke()
+            elif indice_atual < len(entradas) - 1:
+                entradas[indice_atual + 1].focus()
+
+def connect_db(): return sqlite3.connect('moradores.db')
 
 def create_tables():
     conn = connect_db()
@@ -54,7 +70,9 @@ def create_tables():
                      CONSTRAINT fk_contas_resp FOREIGN KEY (cpf_resp) REFERENCES contas_resp(cpf) ON DELETE CASCADE)''')
 
     cursor.execute('''CREATE TABLE IF NOT EXISTS relatorios
-                    (por_fam FLOAT, homens INTEGER,
+                    (id INTEGER PRIMARY KEY AUTOINCREMENT,
+                     por_fam FLOAT, 
+                     homens INTEGER,
                      mulheres INTEGER,
                      menores INTEGER,
                      idosos INTEGER,
@@ -97,35 +115,6 @@ def formatar_entrada(event, tipo="cpf"):
         event.widget.delete(0, tk.END)
         event.widget.insert(0, texto_formatado)
 
-
-def atualizar_relatorios():
-    conn = connect_db()
-    cursor = conn.cursor()
-    cursor.execute("SELECT AVG(num_moradores) FROM extra_resp")
-    por_fam = cursor.fetchone()[0] or 0
-    cursor.execute("SELECT COUNT(*) FROM contas_resp WHERE sexo = 'M'")
-    homens = cursor.fetchone()[0]
-    cursor.execute("SELECT COUNT(*) FROM contas_moradores WHERE sexo = 'M'")
-    homens += cursor.fetchone()[0]
-    cursor.execute("SELECT COUNT(*) FROM contas_resp WHERE sexo = 'F'")
-    mulheres = cursor.fetchone()[0]
-    cursor.execute("SELECT COUNT(*) FROM contas_moradores WHERE sexo = 'F'")
-    mulheres += cursor.fetchone()[0]
-    cursor.execute("SELECT COUNT(*) FROM menor")
-    menores = cursor.fetchone()[0]
-    cursor.execute("SELECT COUNT(*) FROM idoso")
-    idosos = cursor.fetchone()[0]
-    cursor.execute("SELECT COUNT(*) FROM menor WHERE condicao_especial IS NOT NULL AND condicao_especial != ''")
-    pcds = cursor.fetchone()[0]
-    cursor.execute("SELECT COUNT(*) FROM contas_resp")
-    populacao_total = cursor.fetchone()[0]
-    cursor.execute("SELECT COUNT(*) FROM contas_moradores")
-    populacao_total += cursor.fetchone()[0]
-    cursor.execute("DELETE FROM relatorios")
-    cursor.execute('''INSERT INTO relatorios (por_fam, homens, mulheres, menores, idosos, pcds, populacao_total) VALUES (?, ?, ?, ?, ?, ?, ?)''', (por_fam, homens, mulheres, menores, idosos, pcds, populacao_total))
-    conn.commit()
-    conn.close()
-
 create_tables()
 
 def open_register():
@@ -153,13 +142,13 @@ def open_register():
         bairro = entry_bairro.get()
         cidade = entry_cidade.get()
         uf = entry_uf.get()
-        nascimento = entry_nascimento.get()  # Adicionando campo de nascimento
-        sexo = entry_sexo.get()  # Sexo M/F
-        etnia = entry_etnia.get()  # Etnia
+        nascimento = entry_nascimento.get()
+        sexo = entry_sexo.get()
+        etnia = entry_etnia.get()
         num_moradores = entry_num_moradores.get()
         renda_perc = entry_renda_perc.get()
-        especie_dom = entry_especie.get()  # Usando Entry para espécie de domicílio
-        tipo_dom = entry_tipo.get()  # Usando Entry para tipo de domicílio
+        especie_dom = entry_especie.get()
+        tipo_dom = entry_tipo.get()
 
         if not cpf or not nome or not senha or not endereco:
             messagebox.showwarning("Atenção", "Todos os campos são obrigatórios!")
@@ -171,16 +160,13 @@ def open_register():
         cursor = conn.cursor()
 
         try:
-            # Criar as tabelas se não existirem
             create_tables()
             
-            # Inserir os dados na tabela 'contas_resp'
             cursor.execute("INSERT INTO contas_resp (cpf, senha, nome, endereco, cep, bairro, cidade, uf, nascimento, sexo, etnia) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                         (cpf, senha_hash, nome, endereco, cep, bairro, cidade, uf, nascimento, sexo, etnia))
 
             conn.commit()
 
-            # Inserir dados adicionais na tabela 'extra_resp'
             cursor.execute("INSERT INTO extra_resp (cpf_resp, num_moradores, renda_perc, especie_dom, tipo_dom) VALUES (?, ?, ?, ?, ?)",
                         (cpf, num_moradores, renda_perc, especie_dom, tipo_dom))
 
@@ -200,71 +186,68 @@ def open_register():
 
     # Coluna 1 (campo à esquerda)
     tk.Label(register_window, text="CPF:", bg="#ADD8E6", font=("Arial", 12)).grid(row=1,column=0,padx=10,pady=10,sticky="e")
-    entry_cpf = tk.Entry(register_window, font=("Arial", 12))
+    entry_cpf = EntryComFoco(register_window, font=("Arial", 12))
     entry_cpf.grid(row=1,column=1,padx=10,pady=10)
     entry_cpf.bind("<KeyRelease>", lambda event: formatar_entrada(event, tipo="cpf"))
 
-    tk.Label(register_window, text="Nome:", bg="#ADD8E6", font=("Arial", 12)).grid(row=2, column=0, padx=10, pady=10, sticky="e")
-    entry_nome = tk.Entry(register_window, font=("Arial", 12))
-    entry_nome.grid(row=2, column=1, padx=10, pady=10)
+    tk.Label(register_window, text="Senha:", bg="#ADD8E6", font=("Arial", 12)).grid(row=2, column=0, padx=10, pady=10, sticky="e")
+    entry_senha = EntryComFoco(register_window, show="*", font=("Arial", 12))
+    entry_senha.grid(row=2, column=1, padx=10, pady=10)
 
-    tk.Label(register_window, text="Etnia:", bg="#ADD8E6", font=("Arial", 12)).grid(row=3, column=0, padx=10, pady=10, sticky="e")
-    entry_etnia = tk.Entry(register_window, font=("Arial", 12))
-    entry_etnia.grid(row=3, column=1, padx=10, pady=10)
+    tk.Label(register_window, text="Nome:", bg="#ADD8E6", font=("Arial", 12)).grid(row=3, column=0, padx=10, pady=10, sticky="e")
+    entry_nome = EntryComFoco(register_window, font=("Arial", 12))
+    entry_nome.grid(row=3, column=1, padx=10, pady=10)
 
-    tk.Label(register_window, text="Nascimento:", bg="#ADD8E6", font=("Arial", 12)).grid(row=11, column=0, padx=10, pady=10, sticky="e")
-    entry_nascimento = tk.Entry(register_window, font=("Arial", 12))
-    entry_nascimento.grid(row=11, column=1, padx=10, pady=10)
+    tk.Label(register_window, text="Sexo (M/F):", bg="#ADD8E6", font=("Arial", 12)).grid(row=6, column=0, padx=10, pady=10, sticky="e")
+    entry_sexo = EntryComFoco(register_window, font=("Arial", 12))
+    entry_sexo.grid(row=4, column=1, padx=10, pady=10)
+    
+    tk.Label(register_window, text="Etnia:", bg="#ADD8E6", font=("Arial", 12)).grid(row=4, column=0, padx=10, pady=10, sticky="e")
+    entry_etnia = EntryComFoco(register_window, font=("Arial", 12))
+    entry_etnia.grid(row=5, column=1, padx=10, pady=10)
+
+    tk.Label(register_window, text="Nascimento:", bg="#ADD8E6", font=("Arial", 12)).grid(row=5, column=0, padx=10, pady=10, sticky="e")
+    entry_nascimento = EntryComFoco(register_window, font=("Arial", 12))
+    entry_nascimento.grid(row=6, column=1, padx=10, pady=10)
     entry_nascimento.bind("<KeyRelease>", lambda event: formatar_entrada(event, tipo="data"))  # Formatar data ao digitar
   
-    tk.Label(register_window, text="Sexo (M/F):", bg="#ADD8E6", font=("Arial", 12)).grid(row=4, column=0, padx=10, pady=10, sticky="e")
-    entry_sexo = tk.Entry(register_window, font=("Arial", 12))
-    entry_sexo.grid(row=4, column=1, padx=10, pady=10)
+    tk.Label(register_window, text="Endereço:", bg="#ADD8E6", font=("Arial", 12)).grid(row=7, column=0, padx=10, pady=10, sticky="e")
+    entry_endereco = EntryComFoco(register_window, font=("Arial", 12))
+    entry_endereco.grid(row=7, column=1, padx=10, pady=10)
 
-    tk.Label(register_window, text="Senha:", bg="#ADD8E6", font=("Arial", 12)).grid(row=5, column=0, padx=10, pady=10, sticky="e")
-    entry_senha = tk.Entry(register_window, show="*", font=("Arial", 12))
-    entry_senha.grid(row=5, column=1, padx=10, pady=10)
+    tk.Label(register_window, text="CEP:", bg="#ADD8E6", font=("Arial", 12)).grid(row=8, column=0, padx=10, pady=10, sticky="e")
+    entry_cep = EntryComFoco(register_window, font=("Arial", 12))
+    entry_cep.grid(row=8, column=1, padx=10, pady=10)
 
-    tk.Label(register_window, text="Endereço:", bg="#ADD8E6", font=("Arial", 12)).grid(row=6, column=0, padx=10, pady=10, sticky="e")
-    entry_endereco = tk.Entry(register_window, font=("Arial", 12))
-    entry_endereco.grid(row=6, column=1, padx=10, pady=10)
+    tk.Label(register_window, text="Bairro:", bg="#ADD8E6", font=("Arial", 12)).grid(row=9, column=0, padx=10, pady=10, sticky="e")
+    entry_bairro = EntryComFoco(register_window, font=("Arial", 12))
+    entry_bairro.grid(row=9, column=1, padx=10, pady=10)
 
-    tk.Label(register_window, text="CEP:", bg="#ADD8E6", font=("Arial", 12)).grid(row=7, column=0, padx=10, pady=10, sticky="e")
-    entry_cep = tk.Entry(register_window, font=("Arial", 12))
-    entry_cep.grid(row=7, column=1, padx=10, pady=10)
+    tk.Label(register_window, text="Cidade:", bg="#ADD8E6", font=("Arial", 12)).grid(row=10, column=0, padx=10, pady=10, sticky="e")
+    entry_cidade = EntryComFoco(register_window, font=("Arial", 12))
+    entry_cidade.grid(row=10, column=1, padx=10, pady=10)
 
-    tk.Label(register_window, text="Bairro:", bg="#ADD8E6", font=("Arial", 12)).grid(row=8, column=0, padx=10, pady=10, sticky="e")
-    entry_bairro = tk.Entry(register_window, font=("Arial", 12))
-    entry_bairro.grid(row=8, column=1, padx=10, pady=10)
+    tk.Label(register_window, text="UF:", bg="#ADD8E6", font=("Arial", 12)).grid(row=11, column=0, padx=10, pady=10, sticky="e")
+    entry_uf = EntryComFoco(register_window, font=("Arial", 12))
+    entry_uf.grid(row=11, column=1, padx=10, pady=10)
 
-    tk.Label(register_window, text="Cidade:", bg="#ADD8E6", font=("Arial", 12)).grid(row=9, column=0, padx=10, pady=10, sticky="e")
-    entry_cidade = tk.Entry(register_window, font=("Arial", 12))
-    entry_cidade.grid(row=9, column=1, padx=10, pady=10)
-
-    tk.Label(register_window, text="UF:", bg="#ADD8E6", font=("Arial", 12)).grid(row=10, column=0, padx=10, pady=10, sticky="e")
-    entry_uf = tk.Entry(register_window, font=("Arial", 12))
-    entry_uf.grid(row=10, column=1, padx=10, pady=10)
-
-    # Coluna 2 (campo à direita) - Adicionando novos campos
     tk.Label(register_window, text="Número de Moradores:", bg="#ADD8E6", font=("Arial", 12)).grid(row=1, column=2, padx=10, pady=10, sticky="e")
-    entry_num_moradores = tk.Entry(register_window, font=("Arial", 12))
+    entry_num_moradores = EntryComFoco(register_window, font=("Arial", 12))
     entry_num_moradores.grid(row=1, column=3, padx=10, pady=10)
 
     tk.Label(register_window, text="Renda per Capita:", bg="#ADD8E6", font=("Arial", 12)).grid(row=2, column=2, padx=10, pady=10, sticky="e")
-    entry_renda_perc = tk.Entry(register_window, font=("Arial", 12))
+    entry_renda_perc = EntryComFoco(register_window, font=("Arial", 12))
     entry_renda_perc.grid(row=2, column=3, padx=10, pady=10)
 
-    # Espécie de Domicílio (na segunda coluna) - Usando Entry
     tk.Label(register_window, text="Espécie de Domicílio:", bg="#ADD8E6", font=("Arial", 12)).grid(row=3, column=2, padx=10, pady=10, sticky="e")
-    entry_especie = tk.Entry(register_window, font=("Arial", 12))
+    entry_especie = EntryComFoco(register_window, font=("Arial", 12))
     entry_especie.grid(row=3, column=3, padx=10, pady=10)
 
-    # Tipo de Domicílio (na segunda coluna) - Usando Entry
     tk.Label(register_window, text="Tipo de Domicílio:", bg="#ADD8E6", font=("Arial", 12)).grid(row=4, column=2, padx=10, pady=10, sticky="e")
-    entry_tipo = tk.Entry(register_window, font=("Arial", 12))
+    entry_tipo = EntryComFoco(register_window, font=("Arial", 12))
     entry_tipo.grid(row=4, column=3, padx=10, pady=10)
 
-    tk.Button(register_window, text="Cadastrar", command=cadastrar, font=("Arial", 12), bg="#4CAF50", fg="white").grid(row=5, column=0, columnspan=4, pady=20)
+    tk.Button(register_window, text="Cadastrar", command=cadastrar, font=("Arial", 12), bg="#4CAF50", fg="white").grid(row=5, column=0, columnspan=4, pady=10)
 
 def open_login():
     login_window = tk.Toplevel(root)
@@ -287,27 +270,27 @@ def open_login():
     tk.Label(login_window, text="Login", font=("Arial", 16, "bold"), bg="#ADD8E6").pack(pady=20)
 
     tk.Label(login_window, text="CPF:", bg="#ADD8E6", font=("Arial", 12)).pack(pady=10)
-    entry_cpf = tk.Entry(login_window, font=("Arial", 12))
+    entry_cpf = EntryComFoco(login_window, font=("Arial", 12))
     entry_cpf.pack(pady=10)
 
-    # Bind da formatação do CPF no evento de digitação
     entry_cpf.bind("<KeyRelease>", lambda event: formatar_entrada(event, tipo="cpf"))
 
     tk.Label(login_window, text="Senha:", bg="#ADD8E6", font=("Arial", 12)).pack(pady=10)
-    entry_senha = tk.Entry(login_window, show="*", font=("Arial", 12))
+    
+    bt_entrar = tk.Button(login_window, text="Entrar", command=login, font=("Arial", 12), bg="#4CAF50", fg="white")
+    bt_entrar.pack(pady=20)
+
+    entry_senha = EntryComFoco(login_window, show="*", font=("Arial", 12), botao=bt_entrar)
     entry_senha.pack(pady=10)
 
     tk.Button(login_window, text="Esqueci minha Senha", command=open_forgot_password, width=15, font=("Arial", 10), bg="#4CAF50", fg="white").pack(pady=10)
 
-    # Função de login
     def login():
         cpf = entry_cpf.get()
         senha = entry_senha.get()
 
-        # Formatar CPF antes de verificar no banco
-        cpf = cpf.replace(".", "").replace("-", "")  # Remover formatação para consulta no banco de dados
+        cpf = cpf.replace(".", "").replace("-", "")
 
-        # Verificar se o CPF está correto no banco de dados
         conn = connect_db()
         cursor = conn.cursor()
         cursor.execute("SELECT senha FROM contas_resp WHERE cpf = ?", (cpf,))
@@ -326,98 +309,81 @@ def open_login():
         else:
             messagebox.showerror("Erro", "CPF não encontrado!")
 
-        conn.close()
 
-    tk.Button(login_window, text="Entrar", command=login, font=("Arial", 12), bg="#4CAF50", fg="white").pack(pady=20)
+def open_forgot_password(): messagebox.showinfo("Esqueci minha Senha", "Por favor, entre em contato com o email: andaime540@gmail.com ou lucasfracaro0403@gmail.com")
 
-
-def open_forgot_password():
-    messagebox.showinfo("Esqueci minha Senha", "Por favor, entre em contato com o email: andaime540@gmail.com")
-
-def exibir_relatorio_completo():
-    conn = connect_db()
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM contas_resp")
-    dados_resp = cursor.fetchall()
-    cursor.execute("SELECT * FROM contas_moradores")
-    dados_moradores = cursor.fetchall()
-
-    # Criando nova janela para o relatório completo
-    relatorio_window = tk.Toplevel(root)
-    relatorio_window.title("Relatório Completo")
-    relatorio_window.geometry("600x500")
-    relatorio_window.resizable(False, False)
-    
-    # Exibir dados completos na nova janela
-    relatorio = "Relatório Completo:\n\nMoradores:\n"
-    
-    for resp in dados_resp:
-        relatorio += f"Nome: {resp[2]}, CPF: {resp[0]}, Endereço: {resp[3]}\n"
-    
-    relatorio += "\nMoradores cadastrados:\n"
-    for morador in dados_moradores:
-        relatorio += f"Nome: {morador[1]}, CPF Responsável: {morador[0]}, Nascimento: {morador[2]}, Sexo: {morador[3]}\n"
-    
-    label_relatorio = tk.Label(relatorio_window, text=relatorio, font=("Arial", 12), justify="left")
-    label_relatorio.pack(padx=20, pady=20)
-    
-    conn.close()
-
-def exibir_dados_resumidos(cpf):
+def atualizar_relatorios():
     conn = connect_db()
     cursor = conn.cursor()
 
-    # Buscar quantidade de pessoas por família
-    cursor.execute("SELECT num_moradores FROM extra_resp WHERE cpf_resp = ?", (cpf,))
-    num_moradores = cursor.fetchone()[0] if cursor.fetchone() else 0
-    
-    # Buscar quantidade de homens
-    cursor.execute("SELECT COUNT(*) FROM contas_moradores WHERE sexo = 'M' AND cpf_resp = ?", (cpf,))
+    # Criação da tabela relatorios, caso não exista
+    cursor.execute('''CREATE TABLE IF NOT EXISTS relatorios (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        por_fam FLOAT, 
+                        homens INTEGER,
+                        mulheres INTEGER,
+                        menores INTEGER,
+                        idosos INTEGER,
+                        pcds INTEGER,
+                        populacao_total INTEGER
+                      )''')
+
+    # Coletando os dados para atualizar, excluindo o CPF '000.000.000-00'
+    cursor.execute("SELECT AVG(num_moradores) FROM extra_resp WHERE cpf_resp != '000.000.000-00'")
+    por_fam = cursor.fetchone()[0] or 0
+
+    cursor.execute("SELECT COUNT(*) FROM contas_resp WHERE sexo = 'M' AND cpf != '000.000.000-00'")
     homens = cursor.fetchone()[0]
-    
-    # Buscar quantidade de mulheres
-    cursor.execute("SELECT COUNT(*) FROM contas_moradores WHERE sexo = 'F' AND cpf_resp = ?", (cpf,))
+    cursor.execute("SELECT COUNT(*) FROM contas_moradores WHERE sexo = 'M' AND cpf_resp != '000.000.000-00'")
+    homens += cursor.fetchone()[0]
+
+    cursor.execute("SELECT COUNT(*) FROM contas_resp WHERE sexo = 'F' AND cpf != '000.000.000-00'")
     mulheres = cursor.fetchone()[0]
-    
-    # Buscar quantidade de crianças até 12 anos
-    cursor.execute("SELECT COUNT(*) FROM menor WHERE cpf_resp = ? AND idade <= 12", (cpf,))
-    criancas = cursor.fetchone()[0]
-    
-    # Buscar quantidade de idosos
-    cursor.execute("SELECT COUNT(*) FROM idoso WHERE cpf_resp = ?", (cpf,))
+    cursor.execute("SELECT COUNT(*) FROM contas_moradores WHERE sexo = 'F' AND cpf_resp != '000.000.000-00'")
+    mulheres += cursor.fetchone()[0]
+
+    cursor.execute("SELECT COUNT(*) FROM menor WHERE cpf_resp != '000.000.000-00'")
+    menores = cursor.fetchone()[0]
+
+    cursor.execute("SELECT COUNT(*) FROM idoso WHERE cpf_resp != '000.000.000-00'")
     idosos = cursor.fetchone()[0]
-    
-    # Buscar quantidade de pessoas com necessidades
-    cursor.execute("SELECT COUNT(*) FROM menor WHERE cpf_resp = ? AND condicao_especial IS NOT NULL", (cpf,))
+
+    cursor.execute("SELECT COUNT(*) FROM menor WHERE condicao_especial IS NOT NULL AND condicao_especial != '' AND cpf_resp != '000.000.000-00'")
     pcds = cursor.fetchone()[0]
-    
-    # Calcular população total
-    populacao_total = num_moradores + homens + mulheres + criancas + idosos + pcds
 
-    # Criando nova janela para os dados resumidos
-    resumo_window = tk.Toplevel(root)
-    resumo_window.title("Resumo dos Dados")
-    resumo_window.geometry("600x400")
-    resumo_window.resizable(False, False)
+    cursor.execute("SELECT COUNT(*) FROM contas_resp WHERE cpf != '000.000.000-00'")
+    populacao_total = cursor.fetchone()[0]
+    cursor.execute("SELECT COUNT(*) FROM contas_moradores WHERE cpf_resp != '000.000.000-00'")
+    populacao_total += cursor.fetchone()[0]
 
-    # Exibir dados resumidos na nova janela
-    resumo = (
-        f"Quantidade de pessoas por família: {num_moradores}\n"
-        f"Quantidade de Homens: {homens}\n"
-        f"Quantidade de Mulheres: {mulheres}\n"
-        f"População Total: {populacao_total}\n"
-    )
-    
-    label_resumo = tk.Label(resumo_window, text=resumo, font=("Arial", 12), justify="left")
-    label_resumo.pack(padx=20, pady=20)
-    
+    # Atualizando os dados na tabela
+    cursor.execute('''UPDATE relatorios 
+                      SET por_fam = ?, 
+                          homens = ?, 
+                          mulheres = ?, 
+                          menores = ?, 
+                          idosos = ?, 
+                          pcds = ?, 
+                          populacao_total = ? 
+                      WHERE id = 1''', 
+                   (por_fam, homens, mulheres, menores, idosos, pcds, populacao_total))
+
+    # Caso não existam registros, insere uma linha com id = 1
+    if cursor.rowcount == 0:
+        cursor.execute('''INSERT INTO relatorios (id, por_fam, homens, mulheres, menores, idosos, pcds, populacao_total) 
+                          VALUES (1, ?, ?, ?, ?, ?, ?, ?)''', 
+                       (por_fam, homens, mulheres, menores, idosos, pcds, populacao_total))
+
+    # Commit e fechamento da conexão
+    conn.commit()
     conn.close()
 
-# Função para mostrar os relatórios
+
 def exibir_relatorio():
     conn = connect_db()
     cursor = conn.cursor()
-    
+    atualizar_relatorios()
+
     # Selecionar os dados do relatório
     cursor.execute("SELECT * FROM relatorios")
     relatorio = cursor.fetchone()
@@ -429,14 +395,16 @@ def exibir_relatorio():
         relatorio_window.geometry("600x500")
         relatorio_window.resizable(False, False)
         
-        # Exibir os dados
+        # Exibir os dados no formato desejado, incluindo menores, idosos e pcds
         relatorio_text = (
             f"Relatórios:\n\n"
-            f"Quantidade de pessoas por família: {relatorio[0]:.2f}\n"
-            f"Quantidade de Homens: {relatorio[1]}\n"
-            f"Quantidade de Mulheres: {relatorio[2]}\n"
-
-            f"População Total: {relatorio[6]}\n"
+            f"Quantidade de pessoas por família: {relatorio[1]:.2f}\n"
+            f"Quantidade de Homens: {relatorio[2]}\n"
+            f"Quantidade de Mulheres: {relatorio[3]}\n"
+            f"Quantidade de Menores: {relatorio[4]}\n"
+            f"Quantidade de Idosos: {relatorio[5]}\n"
+            f"Quantidade de PCDs: {relatorio[6]}\n"
+            f"População Total: {relatorio[7]}\n"
         )
         
         label_relatorio = tk.Label(relatorio_window, text=relatorio_text, font=("Arial", 12), justify="left")
@@ -468,12 +436,12 @@ def open_login():
     tk.Label(login_window, text="Login", font=("Arial", 16, "bold"), bg="#ADD8E6").pack(pady=20)
 
     tk.Label(login_window, text="CPF:", bg="#ADD8E6", font=("Arial", 12)).pack(pady=20)
-    entry_cpf = tk.Entry(login_window, font=("Arial", 12))
+    entry_cpf = EntryComFoco(login_window, font=("Arial", 12))
     entry_cpf.pack(pady=10)
     entry_cpf.bind("<KeyRelease>", lambda event: formatar_entrada(event, tipo="cpf"))
 
     tk.Label(login_window, text="Senha:", bg="#ADD8E6", font=("Arial", 12)).pack(pady=10)
-    entry_senha = tk.Entry(login_window, show="*", font=("Arial", 12))
+    entry_senha = EntryComFoco(login_window, show="*", font=("Arial", 12))
     entry_senha.pack(pady=10)
 
     tk.Button(login_window, text="Esqueci minha Senha", command=open_forgot_password, width=15, font=("Arial", 10), bg="#4CAF50", fg="white").pack(pady=10)
@@ -524,9 +492,8 @@ position_right = int(screen_width / 2 - window_width / 2)
 root.geometry(f'{window_width}x{window_height}+{position_right}+{position_top}')
 
 # Botões do Hub
-btlogin = tk.Button(root, text="Login", command=open_login, width=20, font=("Arial", 12), bg="#4CAF50", fg="white")
+btlogin = tk.Button(root, text="Login do Responsável", command=open_login, width=20, font=("Arial", 12), bg="#4CAF50", fg="white")
 btlogin.pack(pady=20)
 tk.Button(root, text="Cadastro", command=open_register, width=20, font=("Arial", 12), bg="#4CAF50", fg="white").pack(pady=20)
 
-# Inicia a interface gráfica
 root.mainloop()
