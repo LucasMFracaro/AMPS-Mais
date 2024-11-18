@@ -57,7 +57,8 @@ def create_tables():
                      CONSTRAINT fk_contas_resp FOREIGN KEY(cpf_resp) REFERENCES contas_resp(cpf) ON DELETE CASCADE)''')
 
     cursor.execute('''CREATE TABLE IF NOT EXISTS menor 
-                    (cpf_resp VARCHAR(11), nome VARCHAR(50) NOT NULL,
+                    (cpf_resp VARCHAR(11),
+                     parentesco VARCHAR(30) NOT NULL, nome VARCHAR(50) NOT NULL,
                      idade SMALLINT NOT NULL, sexo CHAR(1) NOT NULL,
                      educacao_basica VARCHAR(20) NOT NULL,
                      cond_especial VARCHAR(255),
@@ -123,6 +124,7 @@ def formatar_entrada(event, tipo="cpf"):
 create_tables()
 
 def open_cadastrar():
+    root.iconify()
     cadastrar_window = tk.Toplevel(root)
     cadastrar_window.title("Cadastro")
     cadastrar_window.geometry("600x800")  # Aumentei o tamanho da janela para acomodar mais campos
@@ -157,6 +159,8 @@ def open_cadastrar():
 
         if not cpf or not nome or not senha or not endereco:
             messagebox.showwarning("Atenção", "Todos os campos são obrigatórios!")
+            cadastrar_window.lift()
+            cadastrar_window.focus_force()
             return
 
         senha_hash = hash_senha(senha)
@@ -178,10 +182,14 @@ def open_cadastrar():
             conn.commit()
 
             messagebox.showinfo("Cadastro", "Cadastro realizado com sucesso!")
+            cadastrar_window.lift()
+            cadastrar_window.focus_force()
             atualizar_relatorios()
             cadastrar_window.destroy()
         except sqlite3.Error as e:
             messagebox.showerror("Erro", "Erro ao cadastrar. Tente novamente.")
+            cadastrar_window.lift()
+            cadastrar_window.focus_force()
             print(e)
         finally:
             conn.close()
@@ -276,19 +284,21 @@ def open_cadastrar():
     tipo_dom_combobox.grid(row=4, column=3, padx=10, pady=10)
 
     tk.Button(cadastrar_window, text="Cadastrar", command=cadastrar, font=("Arial", 12), bg="#4CAF50", fg="white").grid(row=5, column=0, columnspan=4, pady=10)
+    root.deiconify()
 
 def open_cadastrar_idoso():
+    root.iconify()
     cadastrar_idoso_window = tk.Toplevel(root)
     cadastrar_idoso_window.title("Cadastro de Idosos")
 
-    cadastrar_idoso_window.geometry("400x400")
+    cadastrar_idoso_window.geometry("400x50")
     cadastrar_idoso_window.resizable(False, False)
     cadastrar_idoso_window.config(bg="#ADD8E6")
 
     screen_width = cadastrar_idoso_window.winfo_screenwidth()
     screen_height = cadastrar_idoso_window.winfo_screenheight()
     window_width = 400
-    window_height = 400
+    window_height = 450
     position_top = int(screen_height / 2 - window_height / 2)
     position_right = int(screen_width / 2 - window_width / 2)
     cadastrar_idoso_window.geometry(f'{window_width}x{window_height}+{position_right}+{position_top}')
@@ -314,6 +324,8 @@ def open_cadastrar_idoso():
 
             if not result:
                 messagebox.showwarning("CPF não encontrado", "O CPF do responsável não foi encontrado. Verifique e tente novamente.")
+                cadastrar_idoso_window.lift()
+                cadastrar_idoso_window.focus_force()
                 return
 
             cursor.execute("INSERT INTO idoso (cpf_resp, nome, idade, sexo, aposentado, bpc) VALUES (?, ?, ?, ?, ?, ?)",
@@ -321,11 +333,15 @@ def open_cadastrar_idoso():
             conn.commit()
 
             messagebox.showinfo("Cadastro", "Cadastro realizado com sucesso!")
+            cadastrar_idoso_window.lift()
+            cadastrar_idoso_window.focus_force()
             atualizar_relatorios()
             cadastrar_idoso_window.destroy()
 
         except sqlite3.Error as e:
             messagebox.showerror("Erro", "Erro ao cadastrar. Tente novamente.")
+            cadastrar_idoso_window.lift()
+            cadastrar_idoso_window.focus_force()
             print(e)
         finally:
             conn.close()
@@ -375,21 +391,22 @@ def open_cadastrar_idoso():
 
     # Botão de cadastro
     tk.Button(cadastrar_idoso_window, text="Cadastrar", command=cadastrar, font=("Arial", 12), bg="#4CAF50", fg="white").grid(row=8, column=0, columnspan=2, pady=10)
-
+    root.deiconify()
 
 
 def open_cadastrar_menor():
+    root.iconify()
     cadastrar_menor_window = tk.Toplevel(root)
     cadastrar_menor_window.title("Cadastro de Menores")
 
-    cadastrar_menor_window.geometry("400x400")
+    cadastrar_menor_window.geometry("400x500")
     cadastrar_menor_window.resizable(False, False)
     cadastrar_menor_window.config(bg="#ADD8E6")
 
     screen_width = cadastrar_menor_window.winfo_screenwidth()
     screen_height = cadastrar_menor_window.winfo_screenheight()
     window_width = 400
-    window_height = 400
+    window_height = 450
     position_top = int(screen_height / 2 - window_height / 2)
     position_right = int(screen_width / 2 - window_width / 2)
     cadastrar_menor_window.geometry(f'{window_width}x{window_height}+{position_right}+{position_top}')
@@ -416,6 +433,8 @@ def open_cadastrar_menor():
 
             if not result:
                 messagebox.showwarning("CPF não encontrado", "O CPF do responsável não foi encontrado. Verifique e tente novamente.")
+                cadastrar_menor_window.lift()
+                cadastrar_menor_window.focus_force()
                 return
 
             cursor.execute("INSERT INTO menor (cpf_resp, parentesco, nome, idade, sexo, educacao_basica, cond_especial) VALUES (?, ?, ?, ?, ?, ?, ?)",
@@ -423,11 +442,15 @@ def open_cadastrar_menor():
             conn.commit()
 
             messagebox.showinfo("Cadastro", "Cadastro realizado com sucesso!")
+            cadastrar_menor_window.lift()
+            cadastrar_menor_window.focus_force()
             atualizar_relatorios()
             cadastrar_menor_window.destroy()
 
         except sqlite3.Error as e:
             messagebox.showerror("Erro", "Erro ao cadastrar. Tente novamente.")
+            cadastrar_menor_window.lift()
+            cadastrar_menor_window.focus_force()
             print(e)
         finally:
             conn.close()
@@ -480,20 +503,21 @@ def open_cadastrar_menor():
 
     # Botão de cadastro
     tk.Button(cadastrar_menor_window, text="Cadastrar", command=cadastrar, font=("Arial", 12), bg="#4CAF50", fg="white").grid(row=8, column=0, columnspan=2, pady=10)
-
+    root.deiconify()
 
 def open_cadastrar_morador():
+    root.iconify()
     cadastrar_mor_window = tk.Toplevel(root)
     cadastrar_mor_window.title("Cadastro de Moradores")
 
-    cadastrar_mor_window.geometry("400x400")
+    cadastrar_mor_window.geometry("400x500")
     cadastrar_mor_window.resizable(False, False)
     cadastrar_mor_window.config(bg="#ADD8E6")
 
     screen_width = cadastrar_mor_window.winfo_screenwidth()
     screen_height = cadastrar_mor_window.winfo_screenheight()
     window_width = 400
-    window_height = 400
+    window_height = 450
     position_top = int(screen_height / 2 - window_height / 2)
     position_right = int(screen_width / 2 - window_width / 2)
     cadastrar_mor_window.geometry(f'{window_width}x{window_height}+{position_right}+{position_top}')
@@ -518,17 +542,23 @@ def open_cadastrar_morador():
 
             if not result:
                 messagebox.showwarning("CPF não encontrado", "O CPF do responsável não foi encontrado. Verifique e tente novamente.")
+                cadastrar_mor_window.lift()
+                cadastrar_mor_window.focus_force()
                 return
             cursor.execute("INSERT INTO contas_moradores (cpf_resp, nome, nascimento, sexo, etnia) VALUES (?, ?, ?, ?, ?)",
                            (cpf_resp, nome, nascimento, sexo, etnia))
             conn.commit()
 
             messagebox.showinfo("Cadastro", "Cadastro realizado com sucesso!")
+            cadastrar_mor_window.lift()
+            cadastrar_mor_window.focus_force()
             atualizar_relatorios()
             cadastrar_mor_window.destroy()
 
         except sqlite3.Error as e:
             messagebox.showerror("Erro", "Erro ao cadastrar. Tente novamente.")
+            cadastrar_mor_window.lift()
+            cadastrar_mor_window.focus_force()
             print(e)
         finally:
             conn.close()
@@ -563,9 +593,12 @@ def open_cadastrar_morador():
 
     # Botão de cadastro
     tk.Button(cadastrar_mor_window, text="Cadastrar", command=cadastrar, font=("Arial", 12), bg="#4CAF50", fg="white").grid(row=7, column=0, columnspan=2, pady=10)
+    root.deiconify()
 
-
-def open_forgot_password(): messagebox.showinfo("Esqueci minha Senha", "Por favor, entre em contato com o email: andaime540@gmail.com ou lucasfracaro0403@gmail.com")
+def open_forgot_password(): 
+    messagebox.showinfo("Esqueci minha Senha", "Por favor, entre em contato com o email: andaime540@gmail.com ou lucasfracaro0403@gmail.com")
+    login_window.lift()
+    login_window.focus_force()
 
 def atualizar_relatorios():
     conn = connect_db()
@@ -590,10 +623,18 @@ def atualizar_relatorios():
     homens = cursor.fetchone()[0]
     cursor.execute("SELECT COUNT(*) FROM contas_moradores WHERE sexo = 'M' AND cpf_resp != '000.000.000-00'")
     homens += cursor.fetchone()[0]
+    cursor.execute("SELECT COUNT(*) FROM menor WHERE sexo = 'M' AND cpf_resp != '000.000.000-00'")
+    homens += cursor.fetchone()[0]
+    cursor.execute("SELECT COUNT(*) FROM idoso WHERE sexo = 'M' AND cpf_resp != '000.000.000-00'")
+    homens += cursor.fetchone()[0]
 
     cursor.execute("SELECT COUNT(*) FROM contas_resp WHERE sexo = 'F' AND cpf != '000.000.000-00'")
     mulheres = cursor.fetchone()[0]
     cursor.execute("SELECT COUNT(*) FROM contas_moradores WHERE sexo = 'F' AND cpf_resp != '000.000.000-00'")
+    mulheres += cursor.fetchone()[0]
+    cursor.execute("SELECT COUNT(*) FROM menor WHERE sexo = 'F' AND cpf_resp != '000.000.000-00'")
+    mulheres += cursor.fetchone()[0]
+    cursor.execute("SELECT COUNT(*) FROM idoso WHERE sexo = 'F' AND cpf_resp != '000.000.000-00'")
     mulheres += cursor.fetchone()[0]
 
     cursor.execute("SELECT COUNT(*) FROM menor WHERE cpf_resp != '000.000.000-00'")
@@ -608,6 +649,10 @@ def atualizar_relatorios():
     cursor.execute("SELECT COUNT(*) FROM contas_resp WHERE cpf != '000.000.000-00'")
     populacao_total = cursor.fetchone()[0]
     cursor.execute("SELECT COUNT(*) FROM contas_moradores WHERE cpf_resp != '000.000.000-00'")
+    populacao_total += cursor.fetchone()[0]
+    cursor.execute("SELECT COUNT(*) FROM idoso WHERE cpf_resp != '000.000.000-00'")
+    populacao_total += cursor.fetchone()[0]
+    cursor.execute("SELECT COUNT(*) FROM menor WHERE cpf_resp != '000.000.000-00'")
     populacao_total += cursor.fetchone()[0]
 
     # Atualizando os dados na tabela
@@ -644,6 +689,7 @@ def exibir_relatorio():
     
     if relatorio:
         # Criar nova janela para exibir o relatório
+        root.iconify()
         relatorio_window = tk.Toplevel(root)
         relatorio_window.title("Relatórios")
         relatorio_window.geometry("600x500")
@@ -667,16 +713,16 @@ def exibir_relatorio():
         messagebox.showwarning("Aviso", "Relatório não encontrado. Tente atualizar os dados.")
     
     conn.close()
-
-import tkinter as tk
-from tkinter import messagebox
+    root.deiconify()
 
 def open_login():
+    global login_window
+    root.iconify()
     login_window = tk.Toplevel(root)
     login_window.title("Login")
 
     # Define o tamanho da janela
-    login_window.geometry("400x400")
+    login_window.geometry("400x500")
     login_window.resizable(False, False)
     login_window.config(bg="#ADD8E6")
 
@@ -684,7 +730,7 @@ def open_login():
     screen_width = login_window.winfo_screenwidth()
     screen_height = login_window.winfo_screenheight()
     window_width = 400
-    window_height = 400
+    window_height = 450
     position_top = int(screen_height / 2 - window_height / 2)
     position_right = int(screen_width / 2 - window_width / 2)
     login_window.geometry(f'{window_width}x{window_height}+{position_right}+{position_top}')
@@ -705,9 +751,6 @@ def open_login():
     btentrar.pack(pady=20)
     btentrar.pack_configure(after=entry_senha)
 
-    # Variáveis para o rodapé
-    footer_label = tk.Label(root, text="", font=("Arial", 14, 'bold'), bg="#ADD8E6")
-    footer_label.pack(side="bottom", fill="x", pady=10)
 
     def login():
         cpf = entry_cpf.get()
@@ -723,10 +766,9 @@ def open_login():
             senha_hash = result[1]
             if check_senha(senha, senha_hash):
                 messagebox.showinfo("Login", "Login realizado com sucesso!")
+                login_window.lift()
+                login_window.focus_force()
 
-                # Atualiza o rodapé com o nome e CPF
-                footer_label.config(text=f"Logado como: \n{nome} \n{cpf}")
-                globals()["CPF"] = cpf
 
                 login_window.destroy()
 
@@ -738,38 +780,63 @@ def open_login():
                 tk.Button(root, text="Cadastrar Menor de Idade", command=open_cadastrar_menor, width=20, font=("Arial", 12), bg="#4CAF50", fg="white").pack(pady=20)
                 tk.Button(root, text="Relatório", command=exibir_relatorio, width=20, font=("Arial", 12), bg="#4CAF50", fg="white").pack(pady=20)
 
+                # Variáveis para o rodapé
+                logout_button = tk.Button(root, text="Sair da conta", command=logout, width=20, font=("Arial", 12), bg="#fc032c", fg="white")
+                logout_button.pack(side="bottom", fill="x", pady=10)
+                footer_label = tk.Label(root, text="", font=("Arial", 14, 'bold'), bg="#ADD8E6")
+                footer_label.pack(side="bottom", fill="x", pady=10)
+                # Atualiza o rodapé com o nome e CPF
+                footer_label.config(text=f"Logado como: \n{nome} \n{cpf}")
+                globals()["CPF"] = cpf
+
+
             else:
                 messagebox.showerror("Erro", "Senha incorreta!")
+                login_window.lift()
+                login_window.focus_force()
         else:
             messagebox.showerror("Erro", "CPF não encontrado!")
+            login_window.lift()
+            login_window.focus_force()
 
         conn.close()
 
     btentrar.config(command=login)
     tk.Button(login_window, text="Esqueci minha Senha", command=open_forgot_password, width=15, font=("Arial", 10), bg="#4CAF50", fg="white").pack(pady=10)
+    root.deiconify()
 
 
+def logout():
+    root.destroy()
+    main_root()
 
-# Tela principal (Hub)
-root = tk.Tk()
-root.title("Hub de Cadastro")
-root.geometry("400x500")
-root.resizable(False, False)
-root.config(bg="#ADD8E6")
+def main_root():
+    # Criação da janela principal
+    global root, btlogin, btcadastro
+    root = tk.Tk()
+    root.title("Sistema de Cadastro")
+    root.geometry("800x600")
+    root.config(bg="#ADD8E6")
 
-# Centraliza a janela principal
-screen_width = root.winfo_screenwidth()
-screen_height = root.winfo_screenheight()
-window_width = 400
-window_height = 500
-position_top = int(screen_height / 2 - window_height / 2)
-position_right = int(screen_width / 2 - window_width / 2)
-root.geometry(f'{window_width}x{window_height}+{position_right}+{position_top}')
+    # Centraliza a janela principal
+    screen_width = root.winfo_screenwidth()
+    screen_height = root.winfo_screenheight()
+    window_width = 400
+    window_height = 600
+    position_top = int(screen_height / 2 - window_height / 2)
+    position_right = int(screen_width / 2 - window_width / 2)
+    root.geometry(f'{window_width}x{window_height}+{position_right}+{position_top}')
+    
+    tk.Label(root, text="Bem-vindo ao AMPS-Mais", font=("Arial", 16, "bold"), bg="#ADD8E6").pack(pady=50)
+    
+    # Botões de login e cadastro
+    btlogin = tk.Button(root, text="Login", command=open_login, width=20, font=("Arial", 12), bg="#4CAF50", fg="white")
+    btlogin.pack(pady=20)
+    
+    btcadastro = tk.Button(root, text="Cadastrar-se", command=open_cadastrar, width=20, font=("Arial", 12), bg="#4CAF50", fg="white")
+    btcadastro.pack(pady=20)
 
-# Botões do Hub
-btlogin = tk.Button(root, text="Login do Responsável", command=open_login, width=20, font=("Arial", 12), bg="#4CAF50", fg="white")
-btlogin.pack(pady=20)
-btcadastro = tk.Button(root, text="Cadastro de Responsável", command=open_cadastrar, width=20, font=("Arial", 12), bg="#4CAF50", fg="white")
-btcadastro.pack(pady=20)
+    root.mainloop()
 
-root.mainloop()
+# Inicializa a aplicação chamando a função main_root()
+if __name__ == "__main__": main_root()
