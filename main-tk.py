@@ -33,14 +33,14 @@ def create_tables():
                      cep VARCHAR(8) NOT NULL, 
                      bairro VARCHAR(20) NOT NULL, 
                      cidade VARCHAR(40) NOT NULL, 
-                     uf CHAR(2) NOT NULL, 
+                     uf CHAR(2) NOT NULL,
                      nascimento DATE NOT NULL, 
                      sexo CHAR(1) NOT NULL, 
                      etnia VARCHAR(15) NOT NULL)''')
 
     cursor.execute('''CREATE TABLE IF NOT EXISTS contas_moradores 
                     (cpf_resp VARCHAR(11),
-                     parentesco_resp SMALLINT NOT NULL,
+                     parentesco_resp VARCHAR(50) NOT NULL,
                      nome VARCHAR(50) NOT NULL,
                      nascimento DATE NOT NULL,
                      sexo CHAR(1) NOT NULL,
@@ -53,12 +53,12 @@ def create_tables():
                      renda_perc DECIMAL(10, 2) NOT NULL,
                      especie_dom CHAR(1) NOT NULL,
                      tipo_dom CHAR(1) NOT NULL,
-                     parentesco_resp SMALLINT NOT NULL DEFAULT 1, 
+                     parentesco_resp VARCHAR(50) NOT NULL DEFAULT "Responsável pelo domicílio", 
                      CONSTRAINT fk_contas_resp FOREIGN KEY(cpf_resp) REFERENCES contas_resp(cpf) ON DELETE CASCADE)''')
 
     cursor.execute('''CREATE TABLE IF NOT EXISTS menor 
                     (cpf_resp VARCHAR(11),
-                     parentesco VARCHAR(30) NOT NULL, nome VARCHAR(50) NOT NULL,
+                     parentesco_resp VARCHAR(50) NOT NULL, nome VARCHAR(50) NOT NULL,
                      idade SMALLINT NOT NULL, sexo CHAR(1) NOT NULL,
                      educacao_basica VARCHAR(20) NOT NULL,
                      cond_especial VARCHAR(255),
@@ -68,7 +68,7 @@ def create_tables():
                     (cpf_resp VARCHAR(11), nome VARCHAR(50) NOT NULL,
                      idade SMALLINT NOT NULL, sexo CHAR(1) NOT NULL,
                      aposentado CHAR(3) NOT NULL, bpc CHAR(3),
-                     CONSTRAINT fk_contas_resp FOREIGN KEY (cpf_resp) REFERENCES contas_resp(cpf) ON DELETE CASCADE)''')
+                     CONSTRAINT fk_contas_resp FOREIGN KEY (cpf_resp) REFERENCES contas_r5esp(cpf) ON DELETE CASCADE)''')
 
     cursor.execute('''CREATE TABLE IF NOT EXISTS relatorios
                     (id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -437,7 +437,7 @@ def open_cadastrar_menor():
                 cadastrar_menor_window.focus_force()
                 return
 
-            cursor.execute("INSERT INTO menor (cpf_resp, parentesco, nome, idade, sexo, educacao_basica, cond_especial) VALUES (?, ?, ?, ?, ?, ?, ?)",
+            cursor.execute("INSERT INTO menor (cpf_resp, parentesco_resp, nome, idade, sexo, educacao_basica, cond_especial) VALUES (?, ?, ?, ?, ?, ?, ?)",
                            (cpf_resp, parentesco, nome, idade, sexo, educacao_basica, cond_especial))
             conn.commit()
 
@@ -526,6 +526,7 @@ def open_cadastrar_morador():
 
     def cadastrar():
         cpf_resp = entry_cpf.get()
+        parentesco = parentesco_var.get()
         nome = entry_nome.get()
         nascimento = entry_nascimento.get()
         sexo = sexo_var.get()
@@ -545,8 +546,8 @@ def open_cadastrar_morador():
                 cadastrar_mor_window.lift()
                 cadastrar_mor_window.focus_force()
                 return
-            cursor.execute("INSERT INTO contas_moradores (cpf_resp, nome, nascimento, sexo, etnia) VALUES (?, ?, ?, ?, ?)",
-                           (cpf_resp, nome, nascimento, sexo, etnia))
+            cursor.execute("INSERT INTO contas_moradores (cpf_resp, parentesco_resp, nome, nascimento, sexo, etnia) VALUES (?, ?, ?, ?, ?, ?)",
+                           (cpf_resp, parentesco, nome, nascimento, sexo, etnia))
             conn.commit()
 
             messagebox.showinfo("Cadastro", "Cadastro realizado com sucesso!")
@@ -569,30 +570,40 @@ def open_cadastrar_morador():
     entry_cpf.bind("<KeyRelease>", lambda event: formatar_entrada(event, tipo="cpf"))
     tk.Label(cadastrar_mor_window, text="(deixe em branco para usar o do usuário)", bg="#ADD8E6", font=("Arial", 6)).grid(row=2, column=1, padx=20, pady=1, sticky="e")
 
-    tk.Label(cadastrar_mor_window, text="Nome:", bg="#ADD8E6", font=("Arial", 12)).grid(row=3, column=0, padx=10, pady=10, sticky="e")
-    entry_nome = EntryComFoco(cadastrar_mor_window, font=("Arial", 12))
-    entry_nome.grid(row=3, column=1, padx=10, pady=10)
+    tk.Label(cadastrar_mor_window, text="Parentesco:", bg="#ADD8E6", font=("Arial", 12)).grid(row=3, column=0, padx=10, pady=10, sticky="e")
+    parentesco_var = tk.StringVar()
+    parentesco_combobox = ttk.Combobox(cadastrar_mor_window, textvariable=parentesco_var, values=[
+        "Cônjuge/companheiro(a) homo",
+        "Cônjuge/companheiro(a) hetero",
+        "Enteado(a)",
+        "Genro ou nora",
+        "Sem parentesco"
+        ], font=("Arial", 12), state="readonly", width=18)
+    parentesco_combobox.grid(row=3, column=1, padx=10, pady=10)
 
-    tk.Label(cadastrar_mor_window, text="Sexo:", bg="#ADD8E6", font=("Arial", 12)).grid(row=4, column=0, padx=10, pady=10, sticky="e")
+    tk.Label(cadastrar_mor_window, text="Nome:", bg="#ADD8E6", font=("Arial", 12)).grid(row=4, column=0, padx=10, pady=10, sticky="e")
+    entry_nome = EntryComFoco(cadastrar_mor_window, font=("Arial", 12))
+    entry_nome.grid(row=4, column=1, padx=10, pady=10)
+
+    tk.Label(cadastrar_mor_window, text="Nascimento:", bg="#ADD8E6", font=("Arial", 12)).grid(row=5, column=0, padx=10, pady=10, sticky="e")
+    entry_nascimento = EntryComFoco(cadastrar_mor_window, font=("Arial", 12))
+    entry_nascimento.grid(row=5, column=1, padx=10, pady=10)
+    entry_nascimento.bind("<KeyRelease>", lambda event: formatar_entrada(event, tipo="data"))
+
+    tk.Label(cadastrar_mor_window, text="Sexo:", bg="#ADD8E6", font=("Arial", 12)).grid(row=6, column=0, padx=10, pady=10, sticky="e")
     sexo_var = tk.StringVar()
     sexo_var.set("")
 
     radio_sexo_m = tk.Radiobutton(cadastrar_mor_window, text="M", variable=sexo_var, value="M")
-    radio_sexo_m.grid(row=4, column=1, padx=10, pady=10, sticky="w")
+    radio_sexo_m.grid(row=6, column=1, padx=10, pady=10, sticky="w")
     radio_sexo_f = tk.Radiobutton(cadastrar_mor_window, text="F", variable=sexo_var, value="F")
-    radio_sexo_f.grid(row=4, column=1, padx=52, pady=10, sticky="w")
+    radio_sexo_f.grid(row=6, column=1, padx=52, pady=10, sticky="w")
 
-    tk.Label(cadastrar_mor_window, text="Etnia:", bg="#ADD8E6", font=("Arial", 12)).grid(row=4, column=0, padx=10, pady=10, sticky="e")
+    tk.Label(cadastrar_mor_window, text="Etnia:", bg="#ADD8E6", font=("Arial", 12)).grid(row=7, column=0, padx=10, pady=10, sticky="e")
     entry_etnia = EntryComFoco(cadastrar_mor_window, font=("Arial", 12))
-    entry_etnia.grid(row=5, column=1, padx=10, pady=10)
+    entry_etnia.grid(row=7, column=1, padx=10, pady=10)
 
-    tk.Label(cadastrar_mor_window, text="Nascimento:", bg="#ADD8E6", font=("Arial", 12)).grid(row=5, column=0, padx=10, pady=10, sticky="e")
-    entry_nascimento = EntryComFoco(cadastrar_mor_window, font=("Arial", 12))
-    entry_nascimento.grid(row=6, column=1, padx=10, pady=10)
-    entry_nascimento.bind("<KeyRelease>", lambda event: formatar_entrada(event, tipo="data"))
-
-    # Botão de cadastro
-    tk.Button(cadastrar_mor_window, text="Cadastrar", command=cadastrar, font=("Arial", 12), bg="#4CAF50", fg="white").grid(row=7, column=0, columnspan=2, pady=10)
+    tk.Button(cadastrar_mor_window, text="Cadastrar", command=cadastrar, font=("Arial", 12), bg="#4CAF50", fg="white").grid(row=8, column=0, columnspan=2, pady=10)
     root.deiconify()
 
 def open_forgot_password(): 
@@ -715,6 +726,29 @@ def exibir_relatorio():
     conn.close()
     root.deiconify()
 
+def exibir_registros():
+    conn = connect_db()
+    cursor = conn.cursor()
+    root.iconify()
+    registros_window = tk.Toplevel(root)
+    registros_window.title("Registros")
+    registros_window.resizable(False, False)
+    registros_window.config(bg="#ADD8E6")
+
+    screen_width = registros_window.winfo_screenwidth()
+    screen_height = registros_window.winfo_screenheight()
+    window_width = 400
+    window_height = 450
+    position_top = int(screen_height / 2 - window_height / 2)
+    position_right = int(screen_width / 2 - window_width / 2)
+    registros_window.geometry(f'{window_width}x{window_height}+{position_right}+{position_top}')
+
+    tk.Label(registros_window, text="Registros em meu CPF", font=("Arial", 16, "bold"), bg="#ADD8E6").grid(row=0, column=0, columnspan=2, pady=20, sticky="n")
+
+    
+    conn.close()
+    root.deiconify()
+
 def open_login():
     global login_window
     root.iconify()
@@ -775,10 +809,11 @@ def open_login():
                 btlogin.pack_forget()
                 btcadastro.pack_forget()
 
-                tk.Button(root, text="Cadastrar Morador", command=open_cadastrar_morador, width=20, font=("Arial", 12), bg="#4CAF50", fg="white").pack(pady=20)
-                tk.Button(root, text="Cadastrar Idoso", command=open_cadastrar_idoso, width=20, font=("Arial", 12), bg="#4CAF50", fg="white").pack(pady=20)
-                tk.Button(root, text="Cadastrar Menor de Idade", command=open_cadastrar_menor, width=20, font=("Arial", 12), bg="#4CAF50", fg="white").pack(pady=20)
-                tk.Button(root, text="Relatório", command=exibir_relatorio, width=20, font=("Arial", 12), bg="#4CAF50", fg="white").pack(pady=20)
+                tk.Button(root, text="Cadastrar Morador", command=open_cadastrar_morador, width=20, font=("Arial", 12), bg="#4CAF50", fg="white").pack(pady=15)
+                tk.Button(root, text="Cadastrar Idoso", command=open_cadastrar_idoso, width=20, font=("Arial", 12), bg="#4CAF50", fg="white").pack(pady=15)
+                tk.Button(root, text="Cadastrar Menor de Idade", command=open_cadastrar_menor, width=20, font=("Arial", 12), bg="#4CAF50", fg="white").pack(pady=15)
+                tk.Button(root, text="Relatório", command=exibir_relatorio, width=20, font=("Arial", 12), bg="#4CAF50", fg="white").pack(pady=15)
+                tk.Button(root, text="Registros com meu CPF", command=exibir_registros, width=20, font=("Arial", 12), bg="#4CAF50", fg="white").pack(pady=15)
 
                 # Variáveis para o rodapé
                 logout_button = tk.Button(root, text="Sair da conta", command=logout, width=20, font=("Arial", 12), bg="#fc032c", fg="white")
@@ -818,7 +853,7 @@ def main_root():
     root.geometry("800x600")
     root.config(bg="#ADD8E6")
 
-    # Centraliza a janela principal
+
     screen_width = root.winfo_screenwidth()
     screen_height = root.winfo_screenheight()
     window_width = 400
@@ -829,7 +864,6 @@ def main_root():
     
     tk.Label(root, text="Bem-vindo ao AMPS-Mais", font=("Arial", 16, "bold"), bg="#ADD8E6").pack(pady=50)
     
-    # Botões de login e cadastro
     btlogin = tk.Button(root, text="Login", command=open_login, width=20, font=("Arial", 12), bg="#4CAF50", fg="white")
     btlogin.pack(pady=20)
     
@@ -838,5 +872,4 @@ def main_root():
 
     root.mainloop()
 
-# Inicializa a aplicação chamando a função main_root()
 if __name__ == "__main__": main_root()
