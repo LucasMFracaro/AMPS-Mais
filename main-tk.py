@@ -1,6 +1,5 @@
 import tkinter as tk
-from tkinter import messagebox
-from tkinter import ttk
+from tkinter import messagebox, ttk
 import sqlite3
 import hashlib
 
@@ -41,6 +40,7 @@ def create_tables():
 
     cursor.execute('''CREATE TABLE IF NOT EXISTS contas_moradores 
                     (cpf_resp VARCHAR(11),
+                     parentesco_resp SMALLINT NOT NULL,
                      nome VARCHAR(50) NOT NULL,
                      nascimento DATE NOT NULL,
                      sexo CHAR(1) NOT NULL,
@@ -65,7 +65,8 @@ def create_tables():
 
     cursor.execute('''CREATE TABLE IF NOT EXISTS idoso
                     (cpf_resp VARCHAR(11), nome VARCHAR(50) NOT NULL,
-                     idade SMALLINT NOT NULL, aposentado BOOLEAN, bpc BOOLEAN,
+                     idade SMALLINT NOT NULL, sexo CHAR(1) NOT NULL,
+                     aposentado CHAR(3) NOT NULL, bpc CHAR(3),
                      CONSTRAINT fk_contas_resp FOREIGN KEY (cpf_resp) REFERENCES contas_resp(cpf) ON DELETE CASCADE)''')
 
     cursor.execute('''CREATE TABLE IF NOT EXISTS relatorios
@@ -206,10 +207,10 @@ def open_cadastrar():
     sexo_var = tk.StringVar()
     sexo_var.set("")
 
-    radio_m = tk.Radiobutton(cadastrar_window, text="M", variable=sexo_var, value="M")
-    radio_m.grid(row=4, column=1, padx=10, pady=10, sticky="w")
-    radio_f = tk.Radiobutton(cadastrar_window, text="F", variable=sexo_var, value="F")
-    radio_f.grid(row=4, column=1, padx=52, pady=10, sticky="w")
+    radio_sexo_m = tk.Radiobutton(cadastrar_window, text="M", variable=sexo_var, value="M")
+    radio_sexo_m.grid(row=4, column=1, padx=10, pady=10, sticky="w")
+    radio_sexo_f = tk.Radiobutton(cadastrar_window, text="F", variable=sexo_var, value="F")
+    radio_sexo_f.grid(row=4, column=1, padx=52, pady=10, sticky="w")
 
     tk.Label(cadastrar_window, text="Etnia:", bg="#ADD8E6", font=("Arial", 12)).grid(row=5, column=0, padx=10, pady=10, sticky="e")
     entry_etnia = EntryComFoco(cadastrar_window, font=("Arial", 12))
@@ -277,24 +278,105 @@ def open_cadastrar():
     tk.Button(cadastrar_window, text="Cadastrar", command=cadastrar, font=("Arial", 12), bg="#4CAF50", fg="white").grid(row=5, column=0, columnspan=4, pady=10)
 
 def open_cadastrar_idoso():
-    cadastrar_window = tk.Toplevel(root)
-    cadastrar_window.title("Cadastro de Idosos")
+    cadastrar_idoso_window = tk.Toplevel(root)
+    cadastrar_idoso_window.title("Cadastro de Idosos")
 
-    # Define o tamanho da janela
-    cadastrar_window.geometry("400x400")
-    cadastrar_window.resizable(False, False)
-    cadastrar_window.config(bg="#ADD8E6")
+    cadastrar_idoso_window.geometry("400x400")
+    cadastrar_idoso_window.resizable(False, False)
+    cadastrar_idoso_window.config(bg="#ADD8E6")
 
-    # Centraliza a janela
-    screen_width = cadastrar_window.winfo_screenwidth()
-    screen_height = cadastrar_window.winfo_screenheight()
+    screen_width = cadastrar_idoso_window.winfo_screenwidth()
+    screen_height = cadastrar_idoso_window.winfo_screenheight()
     window_width = 400
     window_height = 400
     position_top = int(screen_height / 2 - window_height / 2)
     position_right = int(screen_width / 2 - window_width / 2)
-    cadastrar_window.geometry(f'{window_width}x{window_height}+{position_right}+{position_top}')
+    cadastrar_idoso_window.geometry(f'{window_width}x{window_height}+{position_right}+{position_top}')
 
-    tk.Label(cadastrar_window, text="Cadastro de Idosos", font=("Arial", 16, "bold"), bg="#ADD8E6").pack(pady=20)
+    tk.Label(cadastrar_idoso_window, text="Cadastro de Idosos", font=("Arial", 16, "bold"), bg="#ADD8E6").grid(row=0, column=0, columnspan=2, pady=20)
+
+    def cadastrar():
+        cpf_resp = entry_cpf.get()
+        nome = entry_nome.get()
+        idade = entry_idade.get()
+        sexo = sexo_var.get()
+        aposentado = apos_var.get()
+        bpc = bpc_var.get()
+
+        if cpf_resp == "": cpf_resp = CPF # type: ignore
+
+        conn = connect_db()
+        cursor = conn.cursor()
+
+        try:
+            cursor.execute("SELECT 1 FROM contas_resp WHERE cpf = ?", (cpf_resp,))
+            result = cursor.fetchone()
+
+            if not result:
+                messagebox.showwarning("CPF não encontrado", "O CPF do responsável não foi encontrado. Verifique e tente novamente.")
+                return
+
+            cursor.execute("INSERT INTO idoso (cpf_resp, nome, idade, sexo, aposentado, bpc) VALUES (?, ?, ?, ?, ?, ?)",
+                           (cpf_resp, nome, idade, sexo, aposentado, bpc))
+            conn.commit()
+
+            messagebox.showinfo("Cadastro", "Cadastro realizado com sucesso!")
+            atualizar_relatorios()
+            cadastrar_idoso_window.destroy()
+
+        except sqlite3.Error as e:
+            messagebox.showerror("Erro", "Erro ao cadastrar. Tente novamente.")
+            print(e)
+        finally:
+            conn.close()
+
+    tk.Label(cadastrar_idoso_window, text="CPF do Responsável:", bg="#ADD8E6", font=("Arial", 12)).grid(row=1, column=0, padx=10, pady=10, sticky="e")
+    entry_cpf = EntryComFoco(cadastrar_idoso_window, font=("Arial", 12))
+    entry_cpf.grid(row=1, column=1, padx=10, pady=10)
+    entry_cpf.bind("<KeyRelease>", lambda event: formatar_entrada(event, tipo="cpf"))
+    tk.Label(cadastrar_idoso_window, text="(deixe em branco para usar o do usuário)", bg="#ADD8E6", font=("Arial", 6)).grid(row=2, column=1, padx=20, pady=1, sticky="e")
+
+    tk.Label(cadastrar_idoso_window, text="Nome:", bg="#ADD8E6", font=("Arial", 12)).grid(row=3, column=0, padx=10, pady=10, sticky="e")
+    entry_nome = EntryComFoco(cadastrar_idoso_window, font=("Arial", 12))
+    entry_nome.grid(row=3, column=1, padx=10, pady=10)
+
+    tk.Label(cadastrar_idoso_window, text="Idade:", bg="#ADD8E6", font=("Arial", 12)).grid(row=4, column=0, padx=10, pady=10, sticky="e")
+    entry_idade = EntryComFoco(cadastrar_idoso_window, font=("Arial", 12))
+    entry_idade.grid(row=4, column=1, padx=10, pady=10)
+    entry_idade.bind("<KeyRelease>", lambda event: formatar_entrada(event, tipo="num"))
+
+    tk.Label(cadastrar_idoso_window, text="Sexo:", bg="#ADD8E6", font=("Arial", 12)).grid(row=5, column=0, padx=10, pady=10, sticky="e")
+    sexo_var = tk.StringVar()
+    sexo_var.set("")
+
+    radio_sexo_m = tk.Radiobutton(cadastrar_idoso_window, text="M", variable=sexo_var, value="M")
+    radio_sexo_m.grid(row=5, column=1, padx=10, pady=10, sticky="w")
+    radio_sexo_f = tk.Radiobutton(cadastrar_idoso_window, text="F", variable=sexo_var, value="F")
+    radio_sexo_f.grid(row=5, column=1, padx=52, pady=10, sticky="w")
+
+    tk.Label(cadastrar_idoso_window, text="Aposentado?", bg="#ADD8E6", font=("Arial", 12)).grid(row=6, column=0, padx=10, pady=10, sticky="e")
+    apos_var = tk.StringVar()
+    apos_var.set("")
+
+    radio_apos_s = tk.Radiobutton(cadastrar_idoso_window, text="Sim", variable=apos_var, value="M")
+    radio_apos_s.grid(row=6, column=1, padx=10, pady=10, sticky="w")
+    radio_apos_n = tk.Radiobutton(cadastrar_idoso_window, text="Não", variable=apos_var, value="F")
+    radio_apos_n.grid(row=6, column=1, padx=52, pady=10, sticky="w")
+
+    tk.Label(cadastrar_idoso_window, text="Tem BPC?", bg="#ADD8E6", font=("Arial", 12)).grid(row=7, column=0, padx=10, pady=10, sticky="e")
+    bpc_var = tk.StringVar()
+    bpc_var.set("")
+
+    radio_bpc_s = tk.Radiobutton(cadastrar_idoso_window, text="Sim", variable=bpc_var, value="M")
+    radio_bpc_s.grid(row=7, column=1, padx=10, pady=10, sticky="w")
+    radio_bpc_n = tk.Radiobutton(cadastrar_idoso_window, text="Não", variable=bpc_var, value="F")
+    radio_bpc_n.grid(row=7, column=1, padx=52, pady=10, sticky="w")
+
+
+    # Botão de cadastro
+    tk.Button(cadastrar_idoso_window, text="Cadastrar", command=cadastrar, font=("Arial", 12), bg="#4CAF50", fg="white").grid(row=8, column=0, columnspan=2, pady=10)
+
+
 
 def open_cadastrar_menor():
     cadastrar_menor_window = tk.Toplevel(root)
@@ -316,6 +398,7 @@ def open_cadastrar_menor():
 
     def cadastrar():
         cpf_resp = entry_cpf.get()
+        parentesco = parentesco_var.get()
         nome = entry_nome.get()
         idade = entry_idade.get()
         sexo = sexo_var.get()
@@ -335,8 +418,8 @@ def open_cadastrar_menor():
                 messagebox.showwarning("CPF não encontrado", "O CPF do responsável não foi encontrado. Verifique e tente novamente.")
                 return
 
-            cursor.execute("INSERT INTO menor (cpf_resp, nome, idade, sexo, educacao_basica, cond_especial) VALUES (?, ?, ?, ?, ?, ?)",
-                           (cpf_resp, nome, idade, sexo, educacao_basica, cond_especial))
+            cursor.execute("INSERT INTO menor (cpf_resp, parentesco, nome, idade, sexo, educacao_basica, cond_especial) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                           (cpf_resp, parentesco, nome, idade, sexo, educacao_basica, cond_especial))
             conn.commit()
 
             messagebox.showinfo("Cadastro", "Cadastro realizado com sucesso!")
@@ -355,6 +438,14 @@ def open_cadastrar_menor():
     entry_cpf.bind("<KeyRelease>", lambda event: formatar_entrada(event, tipo="cpf"))
     tk.Label(cadastrar_menor_window, text="(deixe em branco para usar o do usuário)", bg="#ADD8E6", font=("Arial", 6)).grid(row=2, column=1, padx=20, pady=1, sticky="e")
 
+    tk.Label(cadastrar_menor_window, text="Parentesco:", bg="#ADD8E6", font=("Arial", 12)).grid(row=2, column=0, padx=10, pady=10, sticky="e")
+    parentesco_var = tk.StringVar()
+    parentesco_combobox = ttk.Combobox(cadastrar_menor_window, textvariable=parentesco_var, values=[
+        "Filho(a) do responsável e do cônjuge",
+        "Filho(a) somente do responsável"
+        ], font=("Arial", 12), state="readonly", width=20)
+    parentesco_combobox.grid(row=2, column=1, padx=10, pady=10)
+
     tk.Label(cadastrar_menor_window, text="Nome:", bg="#ADD8E6", font=("Arial", 12)).grid(row=3, column=0, padx=10, pady=10, sticky="e")
     entry_nome = EntryComFoco(cadastrar_menor_window, font=("Arial", 12))
     entry_nome.grid(row=3, column=1, padx=10, pady=10)
@@ -368,10 +459,10 @@ def open_cadastrar_menor():
     sexo_var = tk.StringVar()
     sexo_var.set("")
 
-    radio_m = tk.Radiobutton(cadastrar_menor_window, text="M", variable=sexo_var, value="M")
-    radio_m.grid(row=5, column=1, padx=10, pady=10, sticky="w")
-    radio_f = tk.Radiobutton(cadastrar_menor_window, text="F", variable=sexo_var, value="F")
-    radio_f.grid(row=5, column=1, padx=52, pady=10, sticky="w")
+    radio_sexo_m = tk.Radiobutton(cadastrar_menor_window, text="M", variable=sexo_var, value="M")
+    radio_sexo_m.grid(row=5, column=1, padx=10, pady=10, sticky="w")
+    radio_sexo_f = tk.Radiobutton(cadastrar_menor_window, text="F", variable=sexo_var, value="F")
+    radio_sexo_f.grid(row=5, column=1, padx=52, pady=10, sticky="w")
 
     tk.Label(cadastrar_menor_window, text="Educação Básica:", bg="#ADD8E6", font=("Arial", 12)).grid(row=6, column=0, padx=10, pady=10, sticky="e")
     educacao_basica_var = tk.StringVar()
@@ -456,10 +547,10 @@ def open_cadastrar_morador():
     sexo_var = tk.StringVar()
     sexo_var.set("")
 
-    radio_m = tk.Radiobutton(cadastrar_mor_window, text="M", variable=sexo_var, value="M")
-    radio_m.grid(row=4, column=1, padx=10, pady=10, sticky="w")
-    radio_f = tk.Radiobutton(cadastrar_mor_window, text="F", variable=sexo_var, value="F")
-    radio_f.grid(row=4, column=1, padx=52, pady=10, sticky="w")
+    radio_sexo_m = tk.Radiobutton(cadastrar_mor_window, text="M", variable=sexo_var, value="M")
+    radio_sexo_m.grid(row=4, column=1, padx=10, pady=10, sticky="w")
+    radio_sexo_f = tk.Radiobutton(cadastrar_mor_window, text="F", variable=sexo_var, value="F")
+    radio_sexo_f.grid(row=4, column=1, padx=52, pady=10, sticky="w")
 
     tk.Label(cadastrar_mor_window, text="Etnia:", bg="#ADD8E6", font=("Arial", 12)).grid(row=4, column=0, padx=10, pady=10, sticky="e")
     entry_etnia = EntryComFoco(cadastrar_mor_window, font=("Arial", 12))
@@ -480,7 +571,6 @@ def atualizar_relatorios():
     conn = connect_db()
     cursor = conn.cursor()
 
-    # Criação da tabela relatorios, caso não exista
     cursor.execute('''CREATE TABLE IF NOT EXISTS relatorios (
                         id INTEGER PRIMARY KEY AUTOINCREMENT,
                         por_fam FLOAT, 
