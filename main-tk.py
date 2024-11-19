@@ -1,7 +1,8 @@
 import tkinter as tk
-from tkinter import messagebox, ttk
 import sqlite3
 import hashlib
+from tkinter import messagebox, ttk
+from datetime import datetime
 
 class EntryComFoco(tk.Entry):
     def __init__(self, master=None, botao=None, **kwargs):
@@ -90,6 +91,11 @@ def hash_senha(senha):
 def check_senha(senha_digitada, senha_hash):
     return hash_senha(senha_digitada) == senha_hash
 
+def calcular_idade(nascimento):
+    nascimento = datetime.strptime(nascimento, "%d/%m/%Y")
+    hoje = datetime.now()
+    return hoje.year - nascimento.year - ((hoje.month, hoje.day) < (nascimento.month, nascimento.day))
+
 def formatar_entrada(event, tipo="cpf"):
     texto = event.widget.get()
     texto = ''.join(c for c in texto if c.isdigit() or (tipo in ["uf"] and c.isalpha()))
@@ -119,7 +125,12 @@ def formatar_entrada(event, tipo="cpf"):
         event.widget.delete(0, tk.END)
         event.widget.insert(0, texto_formatado)
 
-
+def redimensionar_ajustar(window_width, window_height):
+    screen_width = root.winfo_screenwidth()
+    screen_height = root.winfo_screenheight()
+    position_top = int(screen_height / 2 - window_height / 2)
+    position_right = int(screen_width / 2 - window_width / 2)
+    return f'{window_width}x{window_height}+{position_right}+{position_top}'
 
 create_tables()
 
@@ -129,16 +140,9 @@ def open_cadastrar():
     cadastrar_window.title("Cadastro")
     cadastrar_window.geometry("600x800")  # Aumentei o tamanho da janela para acomodar mais campos
     cadastrar_window.resizable(False, False)
-    
-    screen_width = cadastrar_window.winfo_screenwidth()
-    screen_height = cadastrar_window.winfo_screenheight()
-    
-    position_top = int(screen_height / 2 - 800 / 2)
-    position_right = int(screen_width / 2 - 600 / 2)
-    
-    cadastrar_window.geometry(f'800x700+{position_right}+{position_top}')
-    
     cadastrar_window.config(bg="#ADD8E6")
+    
+    cadastrar_window.geometry(redimensionar_ajustar(800, 700))
 
     def cadastrar():
         cpf = entry_cpf.get()
@@ -161,6 +165,7 @@ def open_cadastrar():
             messagebox.showwarning("Atenção", "Todos os campos são obrigatórios!")
             cadastrar_window.lift()
             cadastrar_window.focus_force()
+            entry_cpf.focus_force()
             return
 
         senha_hash = hash_senha(senha)
@@ -184,6 +189,7 @@ def open_cadastrar():
             messagebox.showinfo("Cadastro", "Cadastro realizado com sucesso!")
             cadastrar_window.lift()
             cadastrar_window.focus_force()
+            root.deiconify()
             atualizar_relatorios()
             cadastrar_window.destroy()
         except sqlite3.Error as e:
@@ -195,7 +201,7 @@ def open_cadastrar():
             conn.close()
 
     
-    tk.Label(cadastrar_window, text="Cadastro de Morador", font=("Arial", 16, "bold"), bg="#ADD8E6").grid(row=0,column=0,columnspan=2,pady=20)
+    tk.Label(cadastrar_window, text="Cadastro de Morador", font=("Arial", 16, "bold"), bg="#ADD8E6").grid(row=0, column=0, columnspan=2, pady=20, sticky="n", padx=10)
 
     # Coluna 1 (campo à esquerda)
     tk.Label(cadastrar_window, text="CPF:", bg="#ADD8E6", font=("Arial", 12)).grid(row=1,column=0,padx=10,pady=10,sticky="e")
@@ -285,8 +291,10 @@ def open_cadastrar():
 
     tk.Button(cadastrar_window, text="Cadastrar", command=cadastrar, font=("Arial", 12), bg="#4CAF50", fg="white").grid(row=5, column=0, columnspan=4, pady=10)
     root.deiconify()
+    entry_cpf.focus_force()
 
 def open_cadastrar_idoso():
+    global CPF
     root.iconify()
     cadastrar_idoso_window = tk.Toplevel(root)
     cadastrar_idoso_window.title("Cadastro de Idosos")
@@ -295,13 +303,7 @@ def open_cadastrar_idoso():
     cadastrar_idoso_window.resizable(False, False)
     cadastrar_idoso_window.config(bg="#ADD8E6")
 
-    screen_width = cadastrar_idoso_window.winfo_screenwidth()
-    screen_height = cadastrar_idoso_window.winfo_screenheight()
-    window_width = 400
-    window_height = 450
-    position_top = int(screen_height / 2 - window_height / 2)
-    position_right = int(screen_width / 2 - window_width / 2)
-    cadastrar_idoso_window.geometry(f'{window_width}x{window_height}+{position_right}+{position_top}')
+    cadastrar_idoso_window.geometry(redimensionar_ajustar(400, 450))
 
     tk.Label(cadastrar_idoso_window, text="Cadastro de Idosos", font=("Arial", 16, "bold"), bg="#ADD8E6").grid(row=0, column=0, columnspan=2, pady=20)
 
@@ -313,7 +315,7 @@ def open_cadastrar_idoso():
         aposentado = apos_var.get()
         bpc = bpc_var.get()
 
-        if cpf_resp == "": cpf_resp = CPF # type: ignore
+        if cpf_resp == "": cpf_resp = CPF
 
         conn = connect_db()
         cursor = conn.cursor()
@@ -389,12 +391,13 @@ def open_cadastrar_idoso():
     radio_bpc_n.grid(row=7, column=1, padx=52, pady=10, sticky="w")
 
 
-    # Botão de cadastro
+    entry_cpf.focus_force()
     tk.Button(cadastrar_idoso_window, text="Cadastrar", command=cadastrar, font=("Arial", 12), bg="#4CAF50", fg="white").grid(row=8, column=0, columnspan=2, pady=10)
-    root.deiconify()
+    #root.deiconify()
 
 
 def open_cadastrar_menor():
+    global CPF
     root.iconify()
     cadastrar_menor_window = tk.Toplevel(root)
     cadastrar_menor_window.title("Cadastro de Menores")
@@ -403,13 +406,8 @@ def open_cadastrar_menor():
     cadastrar_menor_window.resizable(False, False)
     cadastrar_menor_window.config(bg="#ADD8E6")
 
-    screen_width = cadastrar_menor_window.winfo_screenwidth()
-    screen_height = cadastrar_menor_window.winfo_screenheight()
-    window_width = 400
-    window_height = 450
-    position_top = int(screen_height / 2 - window_height / 2)
-    position_right = int(screen_width / 2 - window_width / 2)
-    cadastrar_menor_window.geometry(f'{window_width}x{window_height}+{position_right}+{position_top}')
+
+    cadastrar_menor_window.geometry(redimensionar_ajustar(400, 450))
 
     tk.Label(cadastrar_menor_window, text="Cadastro de Menores", font=("Arial", 16, "bold"), bg="#ADD8E6").grid(row=0, column=0, columnspan=2, pady=20)
 
@@ -422,7 +420,7 @@ def open_cadastrar_menor():
         educacao_basica = educacao_basica_var.get()
         cond_especial = entry_cond_especial.get()
 
-        if cpf_resp == "": cpf_resp = CPF # type: ignore
+        if cpf_resp == "": cpf_resp = CPF
 
         conn = connect_db()
         cursor = conn.cursor()
@@ -503,9 +501,10 @@ def open_cadastrar_menor():
 
     # Botão de cadastro
     tk.Button(cadastrar_menor_window, text="Cadastrar", command=cadastrar, font=("Arial", 12), bg="#4CAF50", fg="white").grid(row=8, column=0, columnspan=2, pady=10)
-    root.deiconify()
+    #root.deiconify()
 
 def open_cadastrar_morador():
+    global CPF
     root.iconify()
     cadastrar_mor_window = tk.Toplevel(root)
     cadastrar_mor_window.title("Cadastro de Moradores")
@@ -514,13 +513,7 @@ def open_cadastrar_morador():
     cadastrar_mor_window.resizable(False, False)
     cadastrar_mor_window.config(bg="#ADD8E6")
 
-    screen_width = cadastrar_mor_window.winfo_screenwidth()
-    screen_height = cadastrar_mor_window.winfo_screenheight()
-    window_width = 400
-    window_height = 450
-    position_top = int(screen_height / 2 - window_height / 2)
-    position_right = int(screen_width / 2 - window_width / 2)
-    cadastrar_mor_window.geometry(f'{window_width}x{window_height}+{position_right}+{position_top}')
+    cadastrar_mor_window.geometry(redimensionar_ajustar(400, 450))
 
     tk.Label(cadastrar_mor_window, text="Cadastro de Morador", font=("Arial", 16, "bold"), bg="#ADD8E6").grid(row=0, column=0, columnspan=2, pady=20)
 
@@ -532,7 +525,7 @@ def open_cadastrar_morador():
         sexo = sexo_var.get()
         etnia = entry_etnia.get()
 
-        if cpf_resp == "": cpf_resp = CPF # type: ignore
+        if cpf_resp == "": cpf_resp = CPF
 
         conn = connect_db()
         cursor = conn.cursor()
@@ -604,7 +597,7 @@ def open_cadastrar_morador():
     entry_etnia.grid(row=7, column=1, padx=10, pady=10)
 
     tk.Button(cadastrar_mor_window, text="Cadastrar", command=cadastrar, font=("Arial", 12), bg="#4CAF50", fg="white").grid(row=8, column=0, columnspan=2, pady=10)
-    root.deiconify()
+    #root.deiconify()
 
 def open_forgot_password(): 
     messagebox.showinfo("Esqueci minha Senha", "Por favor, entre em contato com o email: andaime540@gmail.com ou lucasfracaro0403@gmail.com")
@@ -727,27 +720,111 @@ def exibir_relatorio():
     root.deiconify()
 
 def exibir_registros():
+    global CPF
+    lista_registros = []
+    
     conn = connect_db()
     cursor = conn.cursor()
+    
     root.iconify()
+
     registros_window = tk.Toplevel(root)
     registros_window.title("Registros")
     registros_window.resizable(False, False)
     registros_window.config(bg="#ADD8E6")
 
-    screen_width = registros_window.winfo_screenwidth()
-    screen_height = registros_window.winfo_screenheight()
-    window_width = 400
-    window_height = 450
-    position_top = int(screen_height / 2 - window_height / 2)
-    position_right = int(screen_width / 2 - window_width / 2)
-    registros_window.geometry(f'{window_width}x{window_height}+{position_right}+{position_top}')
+    registros_window.geometry(redimensionar_ajustar(600, 450))
 
-    tk.Label(registros_window, text="Registros em meu CPF", font=("Arial", 16, "bold"), bg="#ADD8E6").grid(row=0, column=0, columnspan=2, pady=20, sticky="n")
+    registros_window.grid_rowconfigure(0, weight=1)
+    registros_window.grid_columnconfigure(0, weight=1)
+    registros_window.grid_columnconfigure(1, weight=1)
 
-    
-    conn.close()
-    root.deiconify()
+
+    tk.Label(registros_window, text=f"Registros de {CPF}", font=("Arial", 16, "bold"), bg="#ADD8E6").grid(row=0, column=0, columnspan=2, pady=20, sticky="n", padx=10)
+
+    tree = ttk.Treeview(registros_window, columns=("categoria", "nome", "sexo", "idade"), show="headings", height=15)
+    tree.grid(row=1, column=0, columnspan=2, padx=10, pady=5)
+
+    tree.heading("categoria", text="Categoria")
+    tree.heading("nome", text="Nome")
+    tree.heading("sexo", text="Sexo")
+    tree.heading("idade", text="Idade")
+
+    tree.column("categoria", width=100, anchor="center")
+    tree.column("nome", width=200, anchor="w")
+    tree.column("sexo", width=50, anchor="center")
+    tree.column("idade", width=50, anchor="center")
+
+    def atualizar_treeview():
+        checar = [
+            ("SELECT nome, sexo, nascimento FROM contas_moradores WHERE cpf_resp = ?", "Morador"),
+            ("SELECT nome, sexo, idade FROM menor WHERE cpf_resp = ?", "Menor"),
+            ("SELECT nome, sexo, idade FROM idoso WHERE cpf_resp = ?", "Idoso")
+        ]
+
+        for item in tree.get_children():
+            tree.delete(item)
+
+        try:
+            lista_registros.clear()
+            for query, categoria in checar:
+                cursor.execute(query, (CPF,))
+                resultados = cursor.fetchall()
+
+                for row in resultados:
+                    if len(row) == 3 and isinstance(row[2], str):
+                        nome, sexo, nascimento = row
+                        idade = calcular_idade(nascimento)
+                        lista_registros.append((categoria, nome, sexo, idade))
+                    else:
+                        nome, sexo, idade = row
+                        lista_registros.append((categoria, nome, sexo, idade))
+
+            for registro in lista_registros:
+                tree.insert("", "end", values=registro)
+
+        except sqlite3.Error as e:
+            messagebox.showerror("Erro", "Erro ao atualizar a tabela. Tente novamente.")
+            print(e)
+
+    def rm_morador():
+        selecionados = tree.selection()
+        if not selecionados:
+            messagebox.showinfo("Atenção", "Nenhum registro selecionado para remoção.")
+            return
+
+        if not messagebox.askyesno("Confirmação", "Tem certeza que deseja remover os registros selecionados?"): return
+
+        try:
+            for item in selecionados:
+                valores = tree.item(item, "values")
+                categoria, nome, sexo, idade = valores
+
+                queries = [
+                    ("DELETE FROM contas_moradores WHERE cpf_resp = ? AND nome = ?", (CPF, nome)),
+                    ("DELETE FROM menor WHERE cpf_resp = ? AND nome = ?", (CPF, nome)),
+                    ("DELETE FROM idoso WHERE cpf_resp = ? AND nome = ?", (CPF, nome))
+                ]
+
+                for query, params in queries:
+                    cursor.execute(query, params)
+                tree.delete(item)
+
+            conn.commit()
+            messagebox.showinfo("Sucesso", "Registro(s) removido(s) com sucesso.")
+        
+        except sqlite3.Error as e:
+            messagebox.showerror("Erro", "Erro ao remover o registro. Tente novamente.")
+            print(e)
+
+    tk.Button(registros_window, text="Atualizar", command=atualizar_treeview, bg="#4682B4", fg="white").grid(row=2, column=0, pady=10, padx=10)
+    tk.Button(registros_window, text="Remover Selecionado(s)", command=rm_morador, bg="#FF6347", fg="white").grid(row=2, column=1, pady=10, padx=10)
+
+    atualizar_treeview()
+
+    registros_window.protocol("WM_DELETE_WINDOW", lambda: [conn.close(), registros_window.destroy(), root.deiconify()])
+
+
 
 def open_login():
     global login_window
@@ -755,19 +832,11 @@ def open_login():
     login_window = tk.Toplevel(root)
     login_window.title("Login")
 
-    # Define o tamanho da janela
     login_window.geometry("400x500")
     login_window.resizable(False, False)
     login_window.config(bg="#ADD8E6")
 
-    # Centraliza a janela
-    screen_width = login_window.winfo_screenwidth()
-    screen_height = login_window.winfo_screenheight()
-    window_width = 400
-    window_height = 450
-    position_top = int(screen_height / 2 - window_height / 2)
-    position_right = int(screen_width / 2 - window_width / 2)
-    login_window.geometry(f'{window_width}x{window_height}+{position_right}+{position_top}')
+    login_window.geometry(redimensionar_ajustar(400, 450))
 
     tk.Label(login_window, text="Login", font=("Arial", 16, "bold"), bg="#ADD8E6").pack(pady=20)
 
@@ -785,6 +854,7 @@ def open_login():
     btentrar.pack(pady=20)
     btentrar.pack_configure(after=entry_senha)
 
+    entry_cpf.focus_force()
 
     def login():
         cpf = entry_cpf.get()
@@ -808,6 +878,7 @@ def open_login():
 
                 btlogin.pack_forget()
                 btcadastro.pack_forget()
+                root.deiconify()
 
                 tk.Button(root, text="Cadastrar Morador", command=open_cadastrar_morador, width=20, font=("Arial", 12), bg="#4CAF50", fg="white").pack(pady=15)
                 tk.Button(root, text="Cadastrar Idoso", command=open_cadastrar_idoso, width=20, font=("Arial", 12), bg="#4CAF50", fg="white").pack(pady=15)
@@ -815,6 +886,7 @@ def open_login():
                 tk.Button(root, text="Relatório", command=exibir_relatorio, width=20, font=("Arial", 12), bg="#4CAF50", fg="white").pack(pady=15)
                 tk.Button(root, text="Registros com meu CPF", command=exibir_registros, width=20, font=("Arial", 12), bg="#4CAF50", fg="white").pack(pady=15)
 
+                root.geometry(redimensionar_ajustar(400, 600))
                 # Variáveis para o rodapé
                 logout_button = tk.Button(root, text="Sair da conta", command=logout, width=20, font=("Arial", 12), bg="#fc032c", fg="white")
                 logout_button.pack(side="bottom", fill="x", pady=10)
@@ -838,7 +910,7 @@ def open_login():
 
     btentrar.config(command=login)
     tk.Button(login_window, text="Esqueci minha Senha", command=open_forgot_password, width=15, font=("Arial", 10), bg="#4CAF50", fg="white").pack(pady=10)
-    root.deiconify()
+
 
 
 def logout():
@@ -853,14 +925,7 @@ def main_root():
     root.geometry("800x600")
     root.config(bg="#ADD8E6")
 
-
-    screen_width = root.winfo_screenwidth()
-    screen_height = root.winfo_screenheight()
-    window_width = 400
-    window_height = 600
-    position_top = int(screen_height / 2 - window_height / 2)
-    position_right = int(screen_width / 2 - window_width / 2)
-    root.geometry(f'{window_width}x{window_height}+{position_right}+{position_top}')
+    root.geometry(redimensionar_ajustar(400, 450))
     
     tk.Label(root, text="Bem-vindo ao AMPS-Mais", font=("Arial", 16, "bold"), bg="#ADD8E6").pack(pady=50)
     
